@@ -7,6 +7,6 @@ class Message:
     user: str
     text: Optional[str] = None
 
-    def render(self):
+    def render(self):  # noqa
         result = {"role": self.user, "content": self.text}
         return result

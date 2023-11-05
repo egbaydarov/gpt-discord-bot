@@ -1,41 +1,42 @@
 import logging
+from typing import Any, List, Optional
+
 import discord
-import re
-from src.base import Message
 from discord import Message as DiscordMessage
-from typing import Optional, List
+
+from src.base import Message
 from src.constants import (
     ALLOWED_SERVER_IDS,
+    INACTIVATE_THREAD_PREFIX,
+    MAX_CHARS_PER_REPLY_MSG,
 )
-from src.constants import MAX_CHARS_PER_REPLY_MSG, INACTIVATE_THREAD_PREFIX
-
 
 logger = logging.getLogger(__name__)
 
 
 def discord_message_to_message(
-        message: DiscordMessage,
-        bot_name: str) -> Optional[Message]:
+    message: DiscordMessage, bot_name: str
+) -> Optional[Message]:
     if (
-        message.type == discord.MessageType.thread_starter_message
+        message.reference
+        and message.type == discord.MessageType.thread_starter_message
         and message.reference.cached_message
         and len(message.reference.cached_message.embeds) > 0
         and len(message.reference.cached_message.embeds[0].fields) > 0
     ):
         field = message.reference.cached_message.embeds[0].fields[0]
-        logger.info(
-            f"field.name - {field.name}"
-        )
+        logger.info(f"field.name - {field.name}")
         return Message(user="user", text=field.value)
-    else:
-        if message.content:
-            user_name = "assistant" if message.author == bot_name else "user"
-            return Message(user=user_name, text=message.content)
+    elif message.content:
+        user_name = "assistant" if message.author == bot_name else "user"
+        return Message(user=user_name, text=message.content)
     return None
 
 
-def split_into_shorter_messages(text, limit=MAX_CHARS_PER_REPLY_MSG, code_block='```'):
-    def split_at_boundary(s, boundary):
+def split_into_shorter_messages(
+    text, limit=MAX_CHARS_PER_REPLY_MSG, code_block="```"
+) -> Any | List[Any]:  # noqa
+    def split_at_boundary(s, boundary) -> Any | List[Any]:  # noqa
         parts = s.split(boundary)
         result = []
         for i, part in enumerate(parts):
@@ -45,10 +46,10 @@ def split_into_shorter_messages(text, limit=MAX_CHARS_PER_REPLY_MSG, code_block=
                 result += split_substring(part)
         return result
 
-    def split_substring(s):
+    def split_substring(s) -> Any | List[Any]:  # noqa
         if len(s) <= limit:
             return [s]
-        for boundary in ('\n', ' '):
+        for boundary in ("\n", " "):
             if boundary in s:
                 break
         else:
@@ -66,18 +67,18 @@ def split_into_shorter_messages(text, limit=MAX_CHARS_PER_REPLY_MSG, code_block=
         result.append(current_part)
         return result
 
-    def split_code_block(s):
+    def split_code_block(s) -> Any | List[Any]:  # noqa
         if len(code_block + s + code_block) <= limit:
             return [code_block + s + code_block]
         else:
-            lines = s.split('\n')
+            lines = s.split("\n")
             result = [code_block]
             for line in lines:
-                if len(result[-1] + '\n' + line) > limit:
+                if len(result[-1] + "\n" + line) > limit:
                     result[-1] += code_block
                     result.append(code_block + line)
                 else:
-                    result[-1] += '\n' + line
+                    result[-1] += "\n" + line
             result[-1] += code_block
             return result
 
@@ -85,6 +86,7 @@ def split_into_shorter_messages(text, limit=MAX_CHARS_PER_REPLY_MSG, code_block=
         return split_at_boundary(text, code_block)
     else:
         return split_substring(text)
+
 
 def is_last_message_stale(
     interaction_message: DiscordMessage, last_message: DiscordMessage, bot_id: str
@@ -97,7 +99,7 @@ def is_last_message_stale(
     )
 
 
-async def close_thread(thread: discord.Thread):
+async def close_thread(thread: discord.Thread) -> None:
     await thread.edit(name=INACTIVATE_THREAD_PREFIX)
     await thread.send(
         embed=discord.Embed(
@@ -111,7 +113,7 @@ async def close_thread(thread: discord.Thread):
 def should_block(guild: Optional[discord.Guild]) -> bool:
     if guild is None:
         # dm's not supported
-        logger.info(f"DM not supported")
+        logger.info("DM not supported")
         return True
 
     if guild.id and guild.id not in ALLOWED_SERVER_IDS:

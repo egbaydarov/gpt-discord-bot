@@ -10,7 +10,7 @@ from src.constants import (
     MAX_THREAD_MESSAGES,
     SECONDS_DELAY_RECEIVING_MSG,
     SYSTEM_MESSAGE,
-    KNOWLEDGE_CUTOFF
+    KNOWLEDGE_CUTOFF,
 )
 import asyncio
 from src.utils import (
@@ -84,21 +84,18 @@ async def chat_command(int: discord.Interaction, message: str):
             # prepare the initial system message
             current_date = datetime.datetime.now().strftime("%Y-%m-%d")
             system_message = SYSTEM_MESSAGE.format(
-                knowledge_cutoff=KNOWLEDGE_CUTOFF,
-                current_date=current_date
+                knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
             )
             # fetch completion
             messages = [
-                Message(user='system', text=system_message),
-                Message(user='user', text=message)
+                Message(user="system", text=system_message),
+                Message(user="user", text=message),
             ]
             response_data = await generate_completion_response(
                 messages=messages,
             )
             # send the result
-            await process_response(
-                thread=thread, response_data=response_data
-            )
+            await process_response(thread=thread, response_data=response_data)
     except Exception as e:
         logger.exception(e)
         await int.response.send_message(
@@ -125,7 +122,13 @@ async def on_message(message: DiscordMessage):
 
         # ignore threads not created by the bot
         thread = channel
-        if thread.owner_id != client.user.id:
+
+        if not client.user:
+            return
+        if not thread:
+            return
+
+        if client.user and thread.owner_id != client.user.id:
             return
 
         # ignore threads that are archived locked or title is not what we want
@@ -141,14 +144,15 @@ async def on_message(message: DiscordMessage):
             # too many messages, no longer going to reply
             await close_thread(thread=thread)
             return
-
+        if not thread.last_message:
+            return
         # wait a bit in case user has more messages
         if SECONDS_DELAY_RECEIVING_MSG > 0:
             await asyncio.sleep(SECONDS_DELAY_RECEIVING_MSG)
             if is_last_message_stale(
                 interaction_message=message,
                 last_message=thread.last_message,
-                bot_id=client.user.id,
+                bot_id=str(client.user.id),
             ):
                 # there is another message, so ignore this one
                 return
@@ -160,18 +164,15 @@ async def on_message(message: DiscordMessage):
         # prepare the initial system message
         current_date = datetime.datetime.now().strftime("%Y-%m-%d")
         system_message = SYSTEM_MESSAGE.format(
-            knowledge_cutoff=KNOWLEDGE_CUTOFF,
-            current_date=current_date
+            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
         )
 
         channel_messages = [
-            discord_message_to_message(
-                message=message,
-                bot_name=client.user)
+            discord_message_to_message(message=message, bot_name=client.user.name)
             async for message in thread.history(limit=MAX_THREAD_MESSAGES)
         ]
         channel_messages = [x for x in channel_messages if x is not None]
-        channel_messages.append(Message(user='system', text=system_message))
+        channel_messages.append(Message(user="system", text=system_message))
         channel_messages.reverse()
 
         # generate the response
@@ -183,14 +184,12 @@ async def on_message(message: DiscordMessage):
         if is_last_message_stale(
             interaction_message=message,
             last_message=thread.last_message,
-            bot_id=client.user.id,
+            bot_id=str(client.user.id),
         ):
             # there is another message and its not from us, so ignore this response
             return
         async with thread.typing():
-            await process_response(
-                thread=thread, response_data=response_data
-            )
+            await process_response(thread=thread, response_data=response_data)
     except Exception as e:
         logger.exception(e)
 
