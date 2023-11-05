@@ -20,3 +20,4 @@ python_version = "3.12"
 [scripts]
 start = "python src/main.py"
 lauch = "pm2 start \"pipenv run start\" --name owlly"
+restart = "pm2 restart owlly"
