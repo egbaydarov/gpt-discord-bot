@@ -1,26 +1,28 @@
+import asyncio
 import datetime
-import discord
-from discord import Message as DiscordMessage
 import logging
-from src.base import Message
-from src.constants import (
+
+import discord
+from base import Message
+from completion import generate_completion_response, process_response
+from constants import (
+    ACTIVATE_THREAD_PREFX,
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
-    ACTIVATE_THREAD_PREFX,
+    KNOWLEDGE_CUTOFF,
     MAX_THREAD_MESSAGES,
     SECONDS_DELAY_RECEIVING_MSG,
     SYSTEM_MESSAGE,
-    KNOWLEDGE_CUTOFF,
 )
-import asyncio
-from src.utils import (
+from discord import Message as DiscordMessage
+from utils import (
+    close_thread,
+    discord_message_to_message,
+    get_persona,
+    is_last_message_stale,
     logger,
     should_block,
-    close_thread,
-    is_last_message_stale,
-    discord_message_to_message,
 )
-from src.completion import generate_completion_response, process_response
 
 logging.basicConfig(
     format="[%(asctime)s] [%(filename)s:%(lineno)d] %(message)s", level=logging.INFO
@@ -33,19 +35,49 @@ client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 
 
+class Client(discord.Client):
+    def __init__(self, *, intents: discord.Intents) -> None:  # noqa
+        super().__init__(intents=intents)
+        self.tree = discord.app_commands.CommandTree(self)
+
+    async def setup_hook(self) -> None:  # noqa
+        await self.tree.sync()
+
+
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
 
 
 # /chat message:
 @tree.command(name="chat", description="Create a new thread for conversation")
+@discord.app_commands.describe(
+    persona="The persona to use with the model, changing this response style"
+)
+@discord.app_commands.choices(
+    persona=[
+        discord.app_commands.Choice(name="default", value="default"),
+        discord.app_commands.Choice(name="dan", value="dan"),
+        discord.app_commands.Choice(name="sda", value="sda"),
+        discord.app_commands.Choice(name="confidant", value="confidant"),
+        discord.app_commands.Choice(name="based", value="based"),
+        discord.app_commands.Choice(name="oppo", value="oppo"),
+        discord.app_commands.Choice(name="dev", value="dev"),
+        discord.app_commands.Choice(name="DUDE", value="dude"),
+        discord.app_commands.Choice(name="AIM", value="aim"),
+        discord.app_commands.Choice(name="AIM", value="aim"),
+        discord.app_commands.Choice(name="ucar", value="ucar"),
+        discord.app_commands.Choice(name="Jailbreak", value="jailbreak"),
+    ]
+)
 @discord.app_commands.checks.has_permissions(send_messages=True)
 @discord.app_commands.checks.has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(send_messages=True)
 @discord.app_commands.checks.bot_has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(manage_threads=True)
-async def chat_command(int: discord.Interaction, message: str):
+async def chat_command(
+    int: discord.Interaction, message: str, persona: discord.app_commands.Choice[str]
+) -> None:
     try:
         # only support creating thread in text channel
         if not isinstance(int.channel, discord.TextChannel):
@@ -83,8 +115,14 @@ async def chat_command(int: discord.Interaction, message: str):
         async with thread.typing():
             # prepare the initial system message
             current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            system_message = SYSTEM_MESSAGE.format(
-                knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
+            personas = get_persona(persona.value)
+
+            system_message = (
+                SYSTEM_MESSAGE.format(
+                    knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
+                )
+                if not personas
+                else personas
             )
             # fetch completion
             messages = [
@@ -105,16 +143,15 @@ async def chat_command(int: discord.Interaction, message: str):
 
 # calls for each message
 @client.event
-async def on_message(message: DiscordMessage):
+async def on_message(message: DiscordMessage) -> None:
     try:
         # block servers not in allow list
-        if should_block(guild=message.guild):
+        if (
+            should_block(guild=message.guild)
+            or not client.user
+            or message.author == client.user
+        ):
             return
-
-        # ignore messages from the bot
-        if message.author == client.user:
-            return
-
         # ignore messages not in a thread
         channel = message.channel
         if not isinstance(channel, discord.Thread):
@@ -123,17 +160,12 @@ async def on_message(message: DiscordMessage):
         # ignore threads not created by the bot
         thread = channel
 
-        if not client.user:
-            return
-        if not thread:
-            return
-
-        if client.user and thread.owner_id != client.user.id:
-            return
-
         # ignore threads that are archived locked or title is not what we want
         if (
-            thread.archived
+            not thread
+            or not thread.last_message
+            or thread.owner_id != client.user.id
+            or thread.archived
             or thread.locked
             or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
         ):
@@ -144,8 +176,7 @@ async def on_message(message: DiscordMessage):
             # too many messages, no longer going to reply
             await close_thread(thread=thread)
             return
-        if not thread.last_message:
-            return
+
         # wait a bit in case user has more messages
         if SECONDS_DELAY_RECEIVING_MSG > 0:
             await asyncio.sleep(SECONDS_DELAY_RECEIVING_MSG)

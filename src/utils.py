@@ -1,15 +1,16 @@
+import json
 import logging
+from pathlib import Path
 from typing import Any, List, Optional
 
 import discord
-from discord import Message as DiscordMessage
-
-from src.base import Message
-from src.constants import (
+from base import Message
+from constants import (
     ALLOWED_SERVER_IDS,
     INACTIVATE_THREAD_PREFIX,
     MAX_CHARS_PER_REPLY_MSG,
 )
+from discord import Message as DiscordMessage
 
 logger = logging.getLogger(__name__)
 
@@ -121,3 +122,9 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
         logger.info(f"Guild {guild} not allowed")
         return True
     return False
+
+
+def get_persona(persona: str) -> str | None:
+    """Get the persona from the persona.json file"""
+    all_personas = json.load(Path("persona.json").open())
+    return all_personas.get(persona, None)

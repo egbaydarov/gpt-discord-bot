@@ -1,6 +1,7 @@
-from dotenv import load_dotenv
 import os
 from typing import List
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -8,8 +9,8 @@ DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
 
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-OPENAI_API_URL = os.environ['OPENAI_API_URL']
-OPENAI_MODEL = os.environ['OPENAI_MODEL']
+OPENAI_API_URL = os.environ["OPENAI_API_URL"]
+OPENAI_MODEL = os.environ["OPENAI_MODEL"]
 
 SYSTEM_MESSAGE = os.environ["SYSTEM_MESSAGE"]
 KNOWLEDGE_CUTOFF = os.environ["KNOWLEDGE_CUTOFF"]

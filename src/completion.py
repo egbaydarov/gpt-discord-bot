@@ -5,15 +5,14 @@ from typing import List, Optional
 
 import aiohttp
 import discord
-
-from src.base import Message
-from src.constants import (
+from base import Message
+from constants import (
     MAX_CHARS_PER_REPLY_MSG,
     OPENAI_API_KEY,
     OPENAI_API_URL,
     OPENAI_MODEL,
 )
-from src.utils import close_thread, logger, split_into_shorter_messages
+from utils import close_thread, logger, split_into_shorter_messages
 
 
 class CompletionResult(Enum):
