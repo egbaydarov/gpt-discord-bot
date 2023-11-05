@@ -113,7 +113,7 @@ async def chat_command(
         today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         # create the thread
         thread = await response.create_thread(
-            name=f"[{today_date}] - {user.display_name[:10]} : {message[:10]}",
+            name=f"{ACTIVATE_THREAD_PREFX} [{today_date}] - {user.display_name[:10]} : {message[:10]}",
             slowmode_delay=1,
             reason="gpt-bot",
             auto_archive_duration=60,
