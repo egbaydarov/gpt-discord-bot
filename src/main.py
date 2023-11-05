@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+from typing import Optional
 
 import discord
 from base import Message
@@ -15,6 +16,7 @@ from constants import (
     SYSTEM_MESSAGE,
 )
 from discord import Message as DiscordMessage
+from discord.ext import commands
 from utils import (
     close_thread,
     discord_message_to_message,
@@ -33,6 +35,7 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 class Client(discord.Client):
@@ -41,12 +44,14 @@ class Client(discord.Client):
         self.tree = discord.app_commands.CommandTree(self)
 
     async def setup_hook(self) -> None:  # noqa
+        logger.info("Setting up slash commands")
         await self.tree.sync()
 
 
 @client.event
 async def on_ready() -> None:
     logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
+    await tree.sync()
 
 
 # /chat message:
@@ -76,7 +81,9 @@ async def on_ready() -> None:
 @discord.app_commands.checks.bot_has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(manage_threads=True)
 async def chat_command(
-    int: discord.Interaction, message: str, persona: discord.app_commands.Choice[str]
+    int: discord.Interaction,
+    message: str,
+    persona: Optional[discord.app_commands.Choice[str]] = None,
 ) -> None:
     try:
         # only support creating thread in text channel
@@ -88,10 +95,9 @@ async def chat_command(
             return
 
         user = int.user
-        logger.info(f"Chat command by {user} {message[:20]}")
         try:
             embed = discord.Embed(
-                description=f"<@{user.id}> wants to chat! 🤖💬",
+                description=f"<@{user.id}> wants to chat! 🤖",
                 color=discord.Color.green(),
             )
             embed.add_field(name=user.name, value=message)
@@ -104,10 +110,10 @@ async def chat_command(
                 f"Failed to start chat {str(e)}", ephemeral=True
             )
             return
-
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         # create the thread
         thread = await response.create_thread(
-            name=f"{ACTIVATE_THREAD_PREFX} {user.name[:20]} {message[:30]}",
+            name=f"[{today_date}] - {user.display_name[:10]} : {message[:10]}",
             slowmode_delay=1,
             reason="gpt-bot",
             auto_archive_duration=60,
@@ -115,14 +121,12 @@ async def chat_command(
         async with thread.typing():
             # prepare the initial system message
             current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            personas = get_persona(persona.value)
-
             system_message = (
                 SYSTEM_MESSAGE.format(
                     knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
                 )
-                if not personas
-                else personas
+                if not persona
+                else get_persona(persona.value)
             )
             # fetch completion
             messages = [
