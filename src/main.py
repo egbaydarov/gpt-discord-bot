@@ -23,6 +23,7 @@ from utils import (
     get_persona,
     is_last_message_stale,
     logger,
+    remove_last_bot_message,
     should_block,
 )
 
@@ -62,17 +63,16 @@ async def on_ready() -> None:
 @discord.app_commands.choices(
     persona=[
         discord.app_commands.Choice(name="default", value="default"),
-        discord.app_commands.Choice(name="dan", value="dan"),
-        discord.app_commands.Choice(name="sda", value="sda"),
-        discord.app_commands.Choice(name="confidant", value="confidant"),
-        discord.app_commands.Choice(name="based", value="based"),
-        discord.app_commands.Choice(name="oppo", value="oppo"),
-        discord.app_commands.Choice(name="dev", value="dev"),
+        discord.app_commands.Choice(name="DAN", value="dan"),
+        discord.app_commands.Choice(name="SDA", value="sda"),
+        discord.app_commands.Choice(name="Confidant", value="confidant"),
+        discord.app_commands.Choice(name="BASED", value="based"),
+        discord.app_commands.Choice(name="OPPO", value="oppo"),
+        discord.app_commands.Choice(name="DEV", value="dev"),
         discord.app_commands.Choice(name="DUDE", value="dude"),
         discord.app_commands.Choice(name="AIM", value="aim"),
-        discord.app_commands.Choice(name="AIM", value="aim"),
-        discord.app_commands.Choice(name="ucar", value="ucar"),
-        discord.app_commands.Choice(name="Jailbreak", value="jailbreak"),
+        discord.app_commands.Choice(name="UCAR", value="ucar"),
+        discord.app_commands.Choice(name="JailBreak", value="jailbreak"),
     ]
 )
 @discord.app_commands.checks.has_permissions(send_messages=True)
@@ -110,24 +110,18 @@ async def chat_command(
                 f"Failed to start chat {str(e)}", ephemeral=True
             )
             return
-        today_date = datetime.datetime.now().strftime("%d-%m-%Y")
+        today_date = datetime.datetime.now().strftime("%d-%m-%Y-%H:%M")
+        persona_system = get_persona(persona.value if persona else None)
         # create the thread
         thread = await response.create_thread(
-            name=f"{ACTIVATE_THREAD_PREFX} [{today_date}] - {user.display_name[:10]}",
-            slowmode_delay=1,
+            name=f"{ACTIVATE_THREAD_PREFX} - {persona_system.icon} [{today_date}] - {user.display_name[:10]}",
             reason="gpt-bot",
             auto_archive_duration=60,
         )
         async with thread.typing():
             # prepare the initial system message
-            current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            system_message = (
-                SYSTEM_MESSAGE.format(
-                    knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
-                )
-                if not persona
-                else get_persona(persona.value)
-            )
+            system_message = persona_system.system
+
             # fetch completion
             messages = [
                 Message(user="system", text=system_message),
@@ -147,7 +141,7 @@ async def chat_command(
 
 # calls for each message
 @client.event
-async def on_message(message: DiscordMessage) -> None:
+async def on_message(message: DiscordMessage) -> None:  # noqa
     try:
         # block servers not in allow list
         if (
@@ -177,8 +171,7 @@ async def on_message(message: DiscordMessage) -> None:
             return
 
         if thread.message_count > MAX_THREAD_MESSAGES:
-            # too many messages, no longer going to reply
-            await close_thread(thread=thread)
+            await close_thread(thread)
             return
 
         # wait a bit in case user has more messages
@@ -209,12 +202,25 @@ async def on_message(message: DiscordMessage) -> None:
         channel_messages = [x for x in channel_messages if x is not None]
         channel_messages.append(Message(user="system", text=system_message))
         channel_messages.reverse()
+        # stop the generating data on keyword "/stop" and close the thread
+        if message.content.lower().strip() == "$$stop":
+            await close_thread(thread)
+            return
 
         # generate the response
         async with thread.typing():
             response_data = await generate_completion_response(
                 messages=channel_messages
             )
+
+        # if the message is == "/rerun" then rerun with the same message before the /rerun and the last reply of the bot
+        if message.content.lower() == "$$rerun":
+            await message.delete()
+            # remove the last message from the channel_messages
+            async with thread.typing():
+                response_data = await generate_completion_response(
+                    messages=remove_last_bot_message(channel_messages[:-1])
+                )
 
         if is_last_message_stale(
             interaction_message=message,

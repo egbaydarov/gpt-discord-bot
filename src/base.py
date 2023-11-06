@@ -10,3 +10,14 @@ class Message:
     def render(self):  # noqa
         result = {"role": self.user, "content": self.text}
         return result
+
+
+@dataclass(frozen=True)
+class Persona:
+    name: str
+    icon: str
+    system: str
+
+    def render(self):  # noqa
+        result = {"name": self.name, "icon": self.icon, "system": self.system}
+        return result

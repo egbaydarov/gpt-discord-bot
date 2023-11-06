@@ -1,14 +1,17 @@
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional
 
 import discord
-from base import Message
+from base import Message, Persona
 from constants import (
     ALLOWED_SERVER_IDS,
     INACTIVATE_THREAD_PREFIX,
+    KNOWLEDGE_CUTOFF,
     MAX_CHARS_PER_REPLY_MSG,
+    SYSTEM_MESSAGE,
 )
 from discord import Message as DiscordMessage
 
@@ -18,6 +21,7 @@ logger = logging.getLogger(__name__)
 def discord_message_to_message(
     message: DiscordMessage, bot_name: str
 ) -> Optional[Message]:
+    user_name = "assistant" if message.author.name == bot_name else "user"
     if (
         message.reference
         and message.type == discord.MessageType.thread_starter_message
@@ -29,13 +33,22 @@ def discord_message_to_message(
         logger.info(f"field.name - {field.name}")
         return Message(user="user", text=field.value)
     elif message.content:
-        user_name = "assistant" if message.author == bot_name else "user"
+        user_name = "assistant" if message.author.name == bot_name else "user"
         return Message(user=user_name, text=message.content)
     return None
 
 
+def remove_last_bot_message(message: list[Message]) -> list[Message]:
+    # remove the lasts messages send by the bot
+    while message[-1].user == "assistant":
+        message.pop()
+    return message
+
+
 def split_into_shorter_messages(
-    text, limit=MAX_CHARS_PER_REPLY_MSG, code_block="```"
+    text,  # noqa
+    limit=MAX_CHARS_PER_REPLY_MSG,  # noqa
+    code_block="```",  # noqa
 ) -> Any | List[Any]:  # noqa
     def split_at_boundary(s, boundary) -> Any | List[Any]:  # noqa
         parts = s.split(boundary)
@@ -124,7 +137,23 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
     return False
 
 
-def get_persona(persona: str) -> str | None:
+def get_persona(persona: str | None) -> Persona:
     """Get the persona from the persona.json file"""
-    all_personas = json.load(Path("persona.json").open())
-    return all_personas.get(persona, None)
+    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    if persona:
+        get_persona = all_personas.get(persona, None)
+        if get_persona:
+            # convert to Persona object
+            return Persona(
+                name=persona if persona else "default",
+                icon=get_persona.get("icon", ""),
+                system=get_persona.get("system", ""),
+            )
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    return Persona(
+        name="GPT-4",
+        icon="🤖",
+        system=SYSTEM_MESSAGE.format(
+            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
+        ),
+    )
