@@ -129,7 +129,6 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
         # dm's not supported
         logger.info("DM not supported")
         return True
-
     if guild.id and guild.id not in ALLOWED_SERVER_IDS:
         # not allowed in this server
         logger.info(f"Guild {guild} not allowed")
@@ -148,6 +147,8 @@ def get_persona(persona: str | None) -> Persona:
                 name=persona if persona else "default",
                 icon=get_persona.get("icon", ""),
                 system=get_persona.get("system", ""),
+                color=get_persona.get("color", ""),
+                title=get_persona.get("name", ""),
             )
     current_date = datetime.now().strftime("%Y-%m-%d")
     return Persona(
@@ -156,4 +157,6 @@ def get_persona(persona: str | None) -> Persona:
         system=SYSTEM_MESSAGE.format(
             knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
         ),
+        title="GPT-4",
+        color="#000000",
     )

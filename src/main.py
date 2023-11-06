@@ -120,8 +120,12 @@ async def chat_command(
         )
         async with thread.typing():
             # prepare the initial system message
-            system_message = persona_system.system
-
+            system_message = (
+                persona_system.system.replace("\n-", "")
+                .replace("\n", "")
+                .replace("__", "")
+            )  # remove newlines
+            logger.info(f"Thread created - {user}: {message}")
             # fetch completion
             messages = [
                 Message(user="system", text=system_message),
@@ -233,6 +237,41 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
             await process_response(thread=thread, response_data=response_data)
     except Exception as e:
         logger.exception(e)
+
+
+@tree.command(name="help", description="Print each persona and their description")
+@discord.app_commands.checks.has_permissions(send_messages=True)
+@discord.app_commands.checks.has_permissions(view_channel=True)
+@discord.app_commands.checks.bot_has_permissions(send_messages=True)
+@discord.app_commands.checks.bot_has_permissions(view_channel=True)
+@discord.app_commands.describe(
+    persona="The persona to use with the model, changing this response style"
+)
+@discord.app_commands.choices(
+    persona=[
+        discord.app_commands.Choice(name="default", value="default"),
+        discord.app_commands.Choice(name="DAN", value="dan"),
+        discord.app_commands.Choice(name="SDA", value="sda"),
+        discord.app_commands.Choice(name="Confidant", value="confidant"),
+        discord.app_commands.Choice(name="BASED", value="based"),
+        discord.app_commands.Choice(name="OPPO", value="oppo"),
+        discord.app_commands.Choice(name="DEV", value="dev"),
+        discord.app_commands.Choice(name="DUDE", value="dude"),
+        discord.app_commands.Choice(name="AIM", value="aim"),
+        discord.app_commands.Choice(name="UCAR", value="ucar"),
+        discord.app_commands.Choice(name="JailBreak", value="jailbreak"),
+    ]
+)
+async def help_command(
+    int: discord.Interaction, persona: Optional[discord.app_commands.Choice[str]] = None
+) -> None:
+    persona_system = get_persona(persona.value if persona else None)
+    embed = discord.Embed(
+        title=f"{persona_system.icon} {persona_system.title}",
+        description=persona_system.system,
+        color=discord.Colour.from_str(persona_system.color),
+    )
+    await int.response.send_message(embed=embed)
 
 
 client.run(DISCORD_BOT_TOKEN)

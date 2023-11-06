@@ -17,7 +17,15 @@ class Persona:
     name: str
     icon: str
     system: str
+    color: str
+    title: str
 
     def render(self):  # noqa
-        result = {"name": self.name, "icon": self.icon, "system": self.system}
+        result = {
+            "name": self.name,
+            "icon": self.icon,
+            "system": self.system,
+            "color": self.color,
+            "title": self.title,
+        }
         return result

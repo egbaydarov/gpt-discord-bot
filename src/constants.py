@@ -16,9 +16,10 @@ SYSTEM_MESSAGE = os.environ["SYSTEM_MESSAGE"]
 KNOWLEDGE_CUTOFF = os.environ["KNOWLEDGE_CUTOFF"]
 
 ALLOWED_SERVER_IDS: List[int] = []
-server_ids = os.environ["ALLOWED_SERVER_IDS"].split(",")
+server_ids = os.environ["ALLOWED_SERVER_IDS"].split(", ")
 for s in server_ids:
     ALLOWED_SERVER_IDS.append(int(s))
+
 
 # Send Messages
 # Create Public Threads
