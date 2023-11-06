@@ -96,11 +96,14 @@ async def chat_command(
 
         user = int.user
         try:
+            persona_system = get_persona(persona.value if persona else None)
+
             embed = discord.Embed(
-                description=f"<@{user.id}> wants to chat! 🤖",
-                color=discord.Color.green(),
+                title=f"{persona_system.icon} {persona_system.title}",
+                description=f"<@{user.id}> started a new chat",
+                color=discord.Color.from_str(persona_system.color),
             )
-            embed.add_field(name=user.name, value=message)
+            embed.add_field(name="Message :", value=f"> {message}")
 
             await int.response.send_message(embed=embed)
             response = await int.original_response()
@@ -111,7 +114,6 @@ async def chat_command(
             )
             return
         today_date = datetime.datetime.now().strftime("%d-%m-%Y-%H:%M")
-        persona_system = get_persona(persona.value if persona else None)
         # create the thread
         thread = await response.create_thread(
             name=f"{ACTIVATE_THREAD_PREFX} - {persona_system.icon} [{today_date}] - {user.display_name[:10]}",
