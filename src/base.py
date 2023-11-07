@@ -1,5 +1,17 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Union
+
+from discord import (
+    CategoryChannel,
+    DMChannel,
+    ForumChannel,
+    GroupChannel,
+    PartialMessageable,
+    StageChannel,
+    TextChannel,
+    Thread,
+    VoiceChannel,
+)
 
 
 @dataclass(frozen=True)
@@ -29,3 +41,19 @@ class Persona:
             "title": self.title,
         }
         return result
+
+
+InteractionChannel = Union[
+    VoiceChannel,
+    StageChannel,
+    TextChannel,
+    ForumChannel,
+    CategoryChannel,
+    Thread,
+    DMChannel,
+    GroupChannel,
+]
+PartialMessageableChannel = Union[
+    TextChannel, VoiceChannel, StageChannel, Thread, DMChannel, PartialMessageable
+]
+MessageableChannel = Union[PartialMessageableChannel, GroupChannel]

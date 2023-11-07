@@ -7,7 +7,7 @@ from typing import Any, List, Optional
 
 import discord
 import tiktoken
-from base import Message, Persona
+from base import InteractionChannel, Message, MessageableChannel, Persona
 from constants import (
     ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER_IDS,
@@ -226,29 +226,22 @@ def generate_choice_persona() -> list[discord.app_commands.Choice]:
 
 
 def allowed_thread(
-    message: discord.Message | discord.Interaction, client: Client
+    client: Client,
+    thread: Optional[InteractionChannel | MessageableChannel] = None,
+    guild: Optional[discord.Guild] = None,
+    author: Optional[discord.User | discord.Member] = None,
+    need_last_message: bool = False,
 ) -> bool:
-    if isinstance(message, discord.Message):
-        author = message.author
-    elif isinstance(message, discord.Interaction):
-        author = message.user
-    else:
-        return False
-    if should_block(guild=message.guild) or not client.user or author == client.user:
+    if should_block(guild) or not client.user or not author or author.bot:
         return False
 
     # ignore messages not in a thread
-    channel = message.channel
-    if not isinstance(channel, discord.Thread):
+    if not isinstance(thread, discord.Thread):
         return False
 
-    # ignore threads not created by the bot
-    thread = channel
-
-    # ignore threads that are archived locked or title is not what we want
     if (
         not thread
-        or not thread.last_message
+        or (need_last_message and not thread.last_message)
         or thread.owner_id != client.user.id
         or thread.archived
         or thread.locked

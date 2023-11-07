@@ -140,7 +140,13 @@ async def chat_command(
 async def on_message(message: DiscordMessage) -> None:  # noqa
     try:
         # block servers not in allow list
-        if not allowed_thread(message, client):
+        if not allowed_thread(
+            client,
+            message.channel,
+            message.guild,
+            message.author,
+            need_last_message=True,
+        ):
             return
 
         thread = cast(discord.Thread, message.channel)
@@ -219,13 +225,21 @@ async def help_command(
     await int.response.send_message(embed=embed)
 
 
-@tree.command(name="persona", description="Change the persona")
+@tree.command(name="change", description="Change the persona of the current thread")
 @discord.app_commands.describe(persona="The persona to use with the model")
 @discord.app_commands.choices(persona=personas_choice)
+@discord.app_commands.guild_only()
 async def change_persona(
     int: discord.Interaction, persona: Optional[discord.app_commands.Choice[str]] = None
 ) -> None:
-    if not allowed_thread(int, client):
+    logger.info(
+        f"Changing persona to {persona.value} in Guild: {int.guild}"  # type: ignore
+    )
+    if not allowed_thread(client, int.channel, int.guild, int.user):
+        await int.response.send_message(
+            "This command can only be used in a thread created by the bot",
+            ephemeral=True,
+        )
         return
 
     thread = cast(discord.Thread, int.channel)
@@ -234,9 +248,13 @@ async def change_persona(
     # replace the 3rd element with the new persona icon
     icon = thread_name[2]
     icon_list = get_all_icons()
+    logger.info(f"icon list: {icon_list}, {icon}")
     if icon in icon_list:
-        thread_name[2] = f"{persona_system.icon}"
+        thread_name[2] = persona_system.icon
         await thread.edit(name=" ".join(thread_name))
+        await int.response.send_message(
+            f"Changed persona to {persona_system.title}", ephemeral=True
+        )
     else:
         await int.response.send_message(
             f"Failed to change persona to {persona_system.title}",
