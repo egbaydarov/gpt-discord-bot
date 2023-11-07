@@ -222,3 +222,30 @@ def generate_choice_persona() -> list[discord.app_commands.Choice]:
             discord.app_commands.Choice(name=value.get("keywords"), value=persona)
         )
     return persona_list
+
+def guild_allowed(message: discord.Message, client: Client) -> bool:
+    if (
+    should_block(guild=message.guild)
+    or not client.user
+    or message.author == client.user
+    ):
+        return False
+
+    # ignore messages not in a thread
+    channel = message.channel
+    if not isinstance(channel, discord.Thread):
+        return False
+
+    # ignore threads not created by the bot
+    thread = channel
+
+    # ignore threads that are archived locked or title is not what we want
+    if ( not thread
+        or not thread.last_message
+        or thread.owner_id != client.user.id
+        or thread.archived
+        or thread.locked or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
+        ):
+        # ignore this thread
+        return False
+    return True

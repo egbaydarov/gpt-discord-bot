@@ -78,11 +78,7 @@ async def chat_command(
 ) -> None:
     try:
         # only support creating thread in text channel
-        if not isinstance(int.channel, discord.TextChannel):
-            return
-
-        # block servers not in allow list
-        if should_block(guild=int.guild):
+        if not isinstance(int.channel, discord.TextChannel) or should_block(int.guild):
             return
 
         user = int.user
@@ -104,6 +100,7 @@ async def chat_command(
                 f"Failed to start chat {str(e)}", ephemeral=True
             )
             return
+
         today_date = datetime.datetime.now().strftime("%d-%m-%Y-%H:%M")
         # create the thread
         thread = await response.create_thread(
@@ -239,6 +236,13 @@ async def help_command(
         color=discord.Colour.from_str(persona_system.color),
     )
     await int.response.send_message(embed=embed)
+
+
+@tree.command(name="persona", description="Change the persona")
+@discord.app_commands.describe(persona="The persona to use with the model")
+@discord.app_commands.choices(persona=personas_choice)
+async def change_persona(int: discord.Interaction, persona: Optional[discord.app_commands.Choice[str]] = None) -> None:
+    thread = int.channel
 
 
 client.run(DISCORD_BOT_TOKEN)
