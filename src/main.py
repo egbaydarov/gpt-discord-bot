@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 import discord
 import tiktoken
@@ -17,10 +17,12 @@ from constants import (
 from discord import Message as DiscordMessage
 from discord.ext import commands
 from utils import (
+    allowed_thread,
     close_thread,
     count_token_message,
     generate_choice_persona,
     generate_initial_system,
+    get_all_icons,
     get_persona,
     is_last_message_stale,
     logger,
@@ -138,31 +140,10 @@ async def chat_command(
 async def on_message(message: DiscordMessage) -> None:  # noqa
     try:
         # block servers not in allow list
-        if (
-            should_block(guild=message.guild)
-            or not client.user
-            or message.author == client.user
-        ):
-            return
-        # ignore messages not in a thread
-        channel = message.channel
-        if not isinstance(channel, discord.Thread):
+        if not allowed_thread(message, client):
             return
 
-        # ignore threads not created by the bot
-        thread = channel
-
-        # ignore threads that are archived locked or title is not what we want
-        if (
-            not thread
-            or not thread.last_message
-            or thread.owner_id != client.user.id
-            or thread.archived
-            or thread.locked
-            or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
-        ):
-            # ignore this thread
-            return
+        thread = cast(discord.Thread, message.channel)
         channel_messages = await generate_initial_system(client, thread)
         nb_tokens = count_token_message(channel_messages, model)
 
@@ -175,8 +156,8 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
             await asyncio.sleep(SECONDS_DELAY_RECEIVING_MSG)
             if is_last_message_stale(
                 interaction_message=message,
-                last_message=thread.last_message,
-                bot_id=str(client.user.id),
+                last_message=thread.last_message,  # type: ignore
+                bot_id=str(client.user.id),  # type: ignore
             ):
                 # there is another message, so ignore this one
                 return
@@ -206,8 +187,8 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
 
         if is_last_message_stale(
             interaction_message=message,
-            last_message=thread.last_message,
-            bot_id=str(client.user.id),
+            last_message=thread.last_message,  # type: ignore
+            bot_id=str(client.user.id),  # type: ignore
         ):
             # there is another message and its not from us, so ignore this response
             return
@@ -241,8 +222,26 @@ async def help_command(
 @tree.command(name="persona", description="Change the persona")
 @discord.app_commands.describe(persona="The persona to use with the model")
 @discord.app_commands.choices(persona=personas_choice)
-async def change_persona(int: discord.Interaction, persona: Optional[discord.app_commands.Choice[str]] = None) -> None:
-    thread = int.channel
+async def change_persona(
+    int: discord.Interaction, persona: Optional[discord.app_commands.Choice[str]] = None
+) -> None:
+    if not allowed_thread(int, client):
+        return
+
+    thread = cast(discord.Thread, int.channel)
+    persona_system = get_persona(persona.value if persona else None)
+    thread_name = thread.name.split(" ")
+    # replace the 3rd element with the new persona icon
+    icon = thread_name[2]
+    icon_list = get_all_icons()
+    if icon in icon_list:
+        thread_name[2] = f"{persona_system.icon}"
+        await thread.edit(name=" ".join(thread_name))
+    else:
+        await int.response.send_message(
+            f"Failed to change persona to {persona_system.title}",
+            ephemeral=True,
+        )
 
 
 client.run(DISCORD_BOT_TOKEN)

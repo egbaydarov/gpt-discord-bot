@@ -9,6 +9,7 @@ import discord
 import tiktoken
 from base import Message, Persona
 from constants import (
+    ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER_IDS,
     INACTIVATE_THREAD_PREFIX,
     KNOWLEDGE_CUTOFF,
@@ -223,12 +224,17 @@ def generate_choice_persona() -> list[discord.app_commands.Choice]:
         )
     return persona_list
 
-def guild_allowed(message: discord.Message, client: Client) -> bool:
-    if (
-    should_block(guild=message.guild)
-    or not client.user
-    or message.author == client.user
-    ):
+
+def allowed_thread(
+    message: discord.Message | discord.Interaction, client: Client
+) -> bool:
+    if isinstance(message, discord.Message):
+        author = message.author
+    elif isinstance(message, discord.Interaction):
+        author = message.user
+    else:
+        return False
+    if should_block(guild=message.guild) or not client.user or author == client.user:
         return False
 
     # ignore messages not in a thread
@@ -240,12 +246,23 @@ def guild_allowed(message: discord.Message, client: Client) -> bool:
     thread = channel
 
     # ignore threads that are archived locked or title is not what we want
-    if ( not thread
+    if (
+        not thread
         or not thread.last_message
         or thread.owner_id != client.user.id
         or thread.archived
-        or thread.locked or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
-        ):
+        or thread.locked
+        or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
+    ):
         # ignore this thread
         return False
     return True
+
+
+def get_all_icons() -> list[str]:
+    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    icon_list = []
+    for persona, value in all_personas.items():
+        icon_list.append(value.get("icon"))
+    icon_list.append("🤖")
+    return icon_list
