@@ -248,7 +248,6 @@ async def change_persona(
     # replace the 3rd element with the new persona icon
     icon = thread_name[2]
     icon_list = get_all_icons()
-    logger.info(f"icon list: {icon_list}, {icon}")
     if icon in icon_list:
         thread_name[2] = persona_system.icon
         await thread.edit(name=" ".join(thread_name))
