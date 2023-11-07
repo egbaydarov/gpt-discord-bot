@@ -43,3 +43,4 @@ INACTIVATE_THREAD_PREFIX = "❌"
 MAX_CHARS_PER_REPLY_MSG = (
     2000  # discord has a 2k limit
 )
+MAX_INPUTS_TOKENS = int(os.environ["MAX_INPUTS_TOKENS"])

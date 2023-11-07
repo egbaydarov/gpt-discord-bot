@@ -4,22 +4,23 @@ import logging
 from typing import Optional
 
 import discord
+import tiktoken
 from base import Message
 from completion import generate_completion_response, process_response
 from constants import (
     ACTIVATE_THREAD_PREFX,
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
-    KNOWLEDGE_CUTOFF,
-    MAX_THREAD_MESSAGES,
+    MAX_INPUTS_TOKENS,
     SECONDS_DELAY_RECEIVING_MSG,
-    SYSTEM_MESSAGE,
 )
 from discord import Message as DiscordMessage
 from discord.ext import commands
 from utils import (
     close_thread,
-    discord_message_to_message,
+    count_token_message,
+    generate_choice_persona,
+    generate_initial_system,
     get_persona,
     is_last_message_stale,
     logger,
@@ -37,6 +38,10 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 bot = commands.Bot(command_prefix="!", intents=intents)
+model = tiktoken.encoding_for_model(
+    "gpt-4"
+)  # need to be upgraded to the new gpt-4 turbo but can do the job for now
+personas_choice = generate_choice_persona()
 
 
 class Client(discord.Client):
@@ -60,21 +65,7 @@ async def on_ready() -> None:
 @discord.app_commands.describe(
     persona="The persona to use with the model, changing this response style"
 )
-@discord.app_commands.choices(
-    persona=[
-        discord.app_commands.Choice(name="default", value="default"),
-        discord.app_commands.Choice(name="DAN", value="dan"),
-        discord.app_commands.Choice(name="SDA", value="sda"),
-        discord.app_commands.Choice(name="Confidant", value="confidant"),
-        discord.app_commands.Choice(name="BASED", value="based"),
-        discord.app_commands.Choice(name="OPPO", value="oppo"),
-        discord.app_commands.Choice(name="DEV", value="dev"),
-        discord.app_commands.Choice(name="DUDE", value="dude"),
-        discord.app_commands.Choice(name="AIM", value="aim"),
-        discord.app_commands.Choice(name="UCAR", value="ucar"),
-        discord.app_commands.Choice(name="JailBreak", value="jailbreak"),
-    ]
-)
+@discord.app_commands.choices(persona=personas_choice)
 @discord.app_commands.checks.has_permissions(send_messages=True)
 @discord.app_commands.checks.has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(send_messages=True)
@@ -175,8 +166,10 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
         ):
             # ignore this thread
             return
+        channel_messages = await generate_initial_system(client, thread)
+        nb_tokens = count_token_message(channel_messages, model)
 
-        if thread.message_count > MAX_THREAD_MESSAGES:
+        if nb_tokens > MAX_INPUTS_TOKENS:
             await close_thread(thread)
             return
 
@@ -196,23 +189,9 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
         )
 
         # prepare the initial system message
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        system_message = SYSTEM_MESSAGE.format(
-            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
-        )
-
-        channel_messages = [
-            discord_message_to_message(message=message, bot_name=client.user.name)
-            async for message in thread.history(limit=MAX_THREAD_MESSAGES)
-        ]
-        channel_messages = [x for x in channel_messages if x is not None]
-        channel_messages.append(Message(user="system", text=system_message))
-        channel_messages.reverse()
-        # stop the generating data on keyword "/stop" and close the thread
         if message.content.lower().strip() == "$$stop":
             await close_thread(thread)
             return
-
         # generate the response
         async with thread.typing():
             response_data = await generate_completion_response(
@@ -249,21 +228,7 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
 @discord.app_commands.describe(
     persona="The persona to use with the model, changing this response style"
 )
-@discord.app_commands.choices(
-    persona=[
-        discord.app_commands.Choice(name="default", value="default"),
-        discord.app_commands.Choice(name="DAN", value="dan"),
-        discord.app_commands.Choice(name="SDA", value="sda"),
-        discord.app_commands.Choice(name="Confidant", value="confidant"),
-        discord.app_commands.Choice(name="BASED", value="based"),
-        discord.app_commands.Choice(name="OPPO", value="oppo"),
-        discord.app_commands.Choice(name="DEV", value="dev"),
-        discord.app_commands.Choice(name="DUDE", value="dude"),
-        discord.app_commands.Choice(name="AIM", value="aim"),
-        discord.app_commands.Choice(name="UCAR", value="ucar"),
-        discord.app_commands.Choice(name="JailBreak", value="jailbreak"),
-    ]
-)
+@discord.app_commands.choices(persona=personas_choice)
 async def help_command(
     int: discord.Interaction, persona: Optional[discord.app_commands.Choice[str]] = None
 ) -> None:

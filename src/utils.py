@@ -1,10 +1,12 @@
 import json
 import logging
+import typing
 from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional
 
 import discord
+import tiktoken
 from base import Message, Persona
 from constants import (
     ALLOWED_SERVER_IDS,
@@ -13,6 +15,7 @@ from constants import (
     MAX_CHARS_PER_REPLY_MSG,
     SYSTEM_MESSAGE,
 )
+from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
 
 logger = logging.getLogger(__name__)
@@ -160,3 +163,62 @@ def get_persona(persona: str | None) -> Persona:
         title="GPT-4",
         color="#000000",
     )
+
+
+def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> int:
+    """Count the number of tokens in a list of messages
+    Use the tiktoken API to count the number of tokens in a message
+    """
+    token = 0
+    for message in messages:
+        if message.text:
+            token += len(models.encode(message.text))
+    return token
+
+
+def get_persona_by_emoji(thread: Thread) -> Persona:
+    # first emoji in the thread name
+    emoji = thread.name.split(" ")[2]
+    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    for persona, value in all_personas.items():
+        if emoji in value.get("icon"):
+            return Persona(
+                name=persona,
+                icon=value.get("icon", ""),
+                system=value.get("system", ""),
+                color=value.get("color", ""),
+                title=value.get("name", ""),
+            )
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    return Persona(
+        name="GPT-4",
+        icon="🤖",
+        system=SYSTEM_MESSAGE.format(
+            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
+        ),
+        title="GPT-4",
+        color="#000000",
+    )
+
+
+async def generate_initial_system(client: Client, thread: Thread) -> list[Message]:
+    system_message = get_persona_by_emoji(thread).system
+    user = typing.cast(ClientUser, client.user)
+    channel_messages = [
+        discord_message_to_message(message=message, bot_name=user.name)
+        async for message in thread.history()
+    ]
+    channel_messages = [x for x in channel_messages if x is not None]
+    channel_messages.append(Message(user="system", text=system_message))
+    channel_messages.reverse()
+    return channel_messages
+
+
+def generate_choice_persona() -> list[discord.app_commands.Choice]:
+    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    persona_list = []
+    for persona, value in all_personas.items():
+        persona_list.append(
+            discord.app_commands.Choice(name=value.get("keywords"), value=persona)
+        )
+    return persona_list

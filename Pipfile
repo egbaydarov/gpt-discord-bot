@@ -11,11 +11,12 @@ pyyaml = "*"
 dacite = "*"
 install = "*"
 aiohttp = "==3.9.0b0"
+tiktoken = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.12"
+python_version = "3.11"
 
 [scripts]
 start = "python src/main.py"
