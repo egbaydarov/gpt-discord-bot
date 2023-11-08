@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 "discord.py" = "*"
-python-dotenv = "*"
 openai = "*"
 pyyaml = "*"
 dacite = "*"
