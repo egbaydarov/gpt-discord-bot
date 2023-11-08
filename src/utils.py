@@ -15,9 +15,12 @@ from constants import (
     KNOWLEDGE_CUTOFF,
     MAX_CHARS_PER_REPLY_MSG,
     SYSTEM_MESSAGE,
+    THREAD_NAME,
 )
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
+
+from .completion import resume_message
 
 logger = logging.getLogger(__name__)
 
@@ -259,3 +262,22 @@ def get_all_icons() -> list[str]:
         icon_list.append(value.get("icon"))
     icon_list.append("🤖")
     return icon_list
+
+
+async def parse_thread_name(interaction: discord.Interaction, message: str) -> str:
+    gpt_message = Message(
+        user="user",
+        text=message,
+    )
+    resume=await resume_message(gpt_message, interaction)
+    accepted_value = {
+        "{{date}}": datetime.now().strftime("%Y-%m-%d"),
+        "{{time}}": datetime.now().strftime("%H:%M"),
+        "{{author}}": interaction.user.display_name[:10],
+        "{{message}}" : message[:5],
+        "{{resume}}" : resume,
+    }
+    thread_name = THREAD_NAME
+    for key, value in accepted_value.items():
+        thread_name = thread_name.replace(key, value)
+    return thread_name

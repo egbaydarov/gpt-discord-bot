@@ -94,3 +94,53 @@ async def process_response(
                 color=discord.Color.yellow(),
             )
         )
+
+
+async def resume_message(
+    message: Message, interaction: discord.Interaction
+) -> str | None:
+    system_message = Message(
+        user="system",
+        text="Resume the message in 3-4 words please, with keeping the language used by the user.",
+    )
+    messages = [system_message, message]
+    response_data = await generate_completion_response(messages)
+    status = response_data.status
+    reply_text = response_data.reply_text
+    status_text = response_data.status_text
+    if status is CompletionResult.OK:
+        if not reply_text:
+            await interaction.response.send_message(
+                embed=discord.Embed(
+                    description="**Invalid response** - empty response",
+                    color=discord.Color.yellow(),
+                )
+            )
+            return None
+        elif len(reply_text) > MAX_CHARS_PER_REPLY_MSG:
+            await interaction.response.send_message(
+                embed=discord.Embed(
+                    description="**Invalid response** - too long",
+                    color=discord.Color.yellow(),
+                )
+            )
+            return None
+        else:
+            return reply_text
+
+    elif status is CompletionResult.TOO_LONG:
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                description=f"**Error** - {status_text}",
+                color=discord.Color.yellow(),
+            )
+        )
+        return None
+    else:
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                description=f"**Error** - {status_text}",
+                color=discord.Color.yellow(),
+            )
+        )
+        return None
