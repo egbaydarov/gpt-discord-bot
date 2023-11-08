@@ -271,15 +271,18 @@ async def parse_thread_name(interaction: discord.Interaction, message: str) -> s
         user="user",
         text=message,
     )
-    resume = await resume_message(gpt_message, interaction)
+
     accepted_value = {
         "{{date}}": datetime.now().strftime(DATE_FORMAT),
         "{{time}}": datetime.now().strftime(TIME_FORMAT),
         "{{author}}": interaction.user.display_name[:10],
         "{{message}}": message[:5],
-        "{{resume}}": resume,
     }
     thread_name = THREAD_NAME
     for key, value in accepted_value.items():
         thread_name = thread_name.replace(key, value)
+        if "{{resume}}" in thread_name:
+            resume = await resume_message(gpt_message, interaction)
+            if resume:
+                thread_name = thread_name.replace("{{resume}}", resume)
     return thread_name
