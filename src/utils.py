@@ -11,11 +11,13 @@ from base import InteractionChannel, Message, MessageableChannel, Persona
 from constants import (
     ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER_IDS,
+    DATE_FORMAT,
     INACTIVATE_THREAD_PREFIX,
     KNOWLEDGE_CUTOFF,
     MAX_CHARS_PER_REPLY_MSG,
     SYSTEM_MESSAGE,
     THREAD_NAME,
+    TIME_FORMAT,
 )
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
@@ -269,13 +271,13 @@ async def parse_thread_name(interaction: discord.Interaction, message: str) -> s
         user="user",
         text=message,
     )
-    resume=await resume_message(gpt_message, interaction)
+    resume = await resume_message(gpt_message, interaction)
     accepted_value = {
-        "{{date}}": datetime.now().strftime("%Y-%m-%d"),
-        "{{time}}": datetime.now().strftime("%H:%M"),
+        "{{date}}": datetime.now().strftime(DATE_FORMAT),
+        "{{time}}": datetime.now().strftime(TIME_FORMAT),
         "{{author}}": interaction.user.display_name[:10],
-        "{{message}}" : message[:5],
-        "{{resume}}" : resume,
+        "{{message}}": message[:5],
+        "{{resume}}": resume,
     }
     thread_name = THREAD_NAME
     for key, value in accepted_value.items():

@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import logging
 from typing import Optional, cast
 
@@ -26,6 +25,7 @@ from utils import (
     get_persona,
     is_last_message_stale,
     logger,
+    parse_thread_name,
     remove_last_bot_message,
     should_block,
 )
@@ -103,11 +103,10 @@ async def chat_command(
             )
             return
 
-        today_date = datetime.datetime.now().strftime("%d-%m-%Y-%H:%M")
-        # create the thread
+        thread_name = await parse_thread_name(int, message)
         thread = await response.create_thread(
-            name=f"{ACTIVATE_THREAD_PREFX} - {persona_system.icon} [{today_date}] - {user.display_name[:10]}",
-            reason="gpt-bot",
+            name=f"{ACTIVATE_THREAD_PREFX} - {persona_system.icon} {thread_name}",
+            reason=message,
             auto_archive_duration=60,
         )
         async with thread.typing():

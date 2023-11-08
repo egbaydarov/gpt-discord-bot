@@ -43,6 +43,6 @@ INACTIVATE_THREAD_PREFIX = "❌"
 MAX_CHARS_PER_REPLY_MSG = 2000  # discord has a 2k limit
 MAX_INPUTS_TOKENS = int(os.environ["MAX_INPUTS_TOKENS"])
 
-THREAD_NAME = str(os.environ["THREAD_NAME"] or )
+THREAD_NAME = str(os.environ["THREAD_NAME"] or "[{{date}}-{{time}}] {{author}} ")
 DATE_FORMAT = os.environ["DATE_FORMAT"] or "%Y-%m-%d"
 TIME_FORMAT = os.environ["TIME_FORMAT"] or "%H:%M:%S"
