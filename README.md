@@ -7,7 +7,7 @@ This bot uses the [OpenAI Python Library](https://github.com/openai/openai-pytho
 
 # Features
 
-- `/chat` starts a public thread, with a `message` argument which is the first user message passed to the bot and an optional persona. 
+- `/chat` starts a public thread, with a `message` argument which is the first user message passed to the bot and an optional persona.
 - Optionally, you can add a persona. Get persona information using `/help <persona>`
 - The model will generate a reply for every user message in any threads started with `/chat`
 - The entire thread will be passed to the model for each request, so the model will remember previous messages in the thread
@@ -49,6 +49,15 @@ OPENAI_MODEL=gpt-4-1106-preview
 SYSTEM_MESSAGE="You are ChatGPT, a large language model trained by OpenAI.\nAnswer as concisely as possible.\n\n- __Knowledge cutoff__: {knowledge_cutoff}\n- __Current date__: {current_date}"
 KNOWLEDGE_CUTOFF="2023-04"
 MAX_INPUTS_TOKENS=128000
+THREAD_FORMAT = "[{{date}}-{{time}}] - {{author}}"
+# supported format :
+# - {{date}} : date of the message
+# - {{time}} : time of the message
+# - {{author}} : author of the message
+# - {{content}} : content of the message
+# - {{resume}} : resume of the message (ask gpt to resume the message)
+DATE_FORMAT="%Y-%m-%d"
+TIME_FORMAT="%H:%M"
 ```
 
 Create an `.env` file, and start filling in the values detailed below:
@@ -59,6 +68,14 @@ Create an `.env` file, and start filling in the values detailed below:
     - Enable "Message Content Intent" under "Privileged Gateway Intents"
 3. Go to the OAuth2 tab, copy your "Client ID", and fill in `DISCORD_CLIENT_ID`
 4. Copy the ID the server you want to allow your bot to be used in by right clicking the server icon and clicking "Copy ID". Fill in `ALLOWED_SERVER_IDS`. If you want to allow multiple servers, separate the IDs by ", " like `server_id_1, server_id_2`
+5. You can change the thread format with `THREAD_FORMAT` with the supported value enclosed by `{{}}`:
+  - `{{date}}` : date of the message
+  - `{{time}}` : time of the message
+  - `{{author}}` : author of the message
+  - `{{content}}` : content of the message
+  - `{{resume}}` : resume of the message (the resume will be in 4-5 words by Chat-GPT).
+6. You can change the date and time format with `DATE_FORMAT` and `TIME_FORMAT`. The format is the same as [strftime](https://strftime.org/).
+
 
 ## Running the bot
 
