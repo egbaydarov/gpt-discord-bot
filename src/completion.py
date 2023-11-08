@@ -1,5 +1,6 @@
 import io
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
@@ -7,10 +8,13 @@ import aiohttp
 import discord
 from base import Message
 from constants import (
+    DATE_FORMAT,
     MAX_CHARS_PER_REPLY_MSG,
     OPENAI_API_KEY,
     OPENAI_API_URL,
     OPENAI_MODEL,
+    THREAD_NAME,
+    TIME_FORMAT,
 )
 from utils import close_thread, logger, split_into_shorter_messages
 
@@ -97,7 +101,7 @@ async def process_response(
 
 
 async def resume_message(
-    message: Message, interaction: discord.Interaction
+    message: Message, followup: discord.WebhookMessage
 ) -> str | None:
     system_message = Message(
         user="system",
@@ -110,37 +114,65 @@ async def resume_message(
     status_text = response_data.status_text
     if status is CompletionResult.OK:
         if not reply_text:
-            await interaction.response.send_message(
+            await followup.edit(
+                content="",
                 embed=discord.Embed(
                     description="**Invalid response** - empty response",
                     color=discord.Color.yellow(),
-                )
+                ),
             )
             return None
         elif len(reply_text) > MAX_CHARS_PER_REPLY_MSG:
-            await interaction.response.send_message(
+            await followup.edit(
+                content="",
                 embed=discord.Embed(
                     description="**Invalid response** - too long",
                     color=discord.Color.yellow(),
-                )
+                ),
             )
             return None
         else:
             return reply_text
 
     elif status is CompletionResult.TOO_LONG:
-        await interaction.response.send_message(
+        await followup.edit(
+            content="",
             embed=discord.Embed(
                 description=f"**Error** - {status_text}",
                 color=discord.Color.yellow(),
-            )
+            ),
         )
         return None
     else:
-        await interaction.response.send_message(
+        await followup.edit(
+            content="",
             embed=discord.Embed(
                 description=f"**Error** - {status_text}",
                 color=discord.Color.yellow(),
-            )
+            ),
         )
         return None
+
+
+async def parse_thread_name(
+    interaction: discord.Interaction, message: str, followup: discord.WebhookMessage
+) -> str:
+    gpt_message = Message(
+        user="user",
+        text=message,
+    )
+
+    accepted_value = {
+        "{{date}}": datetime.now().strftime(DATE_FORMAT),
+        "{{time}}": datetime.now().strftime(TIME_FORMAT),
+        "{{author}}": interaction.user.display_name[:10],
+        "{{message}}": message[:5],
+    }
+    thread_name = THREAD_NAME
+    for key, value in accepted_value.items():
+        thread_name = thread_name.replace(key, value)
+        if "{{resume}}" in thread_name:
+            resume = await resume_message(gpt_message, followup)
+            if resume:
+                thread_name = thread_name.replace("{{resume}}", resume)
+    return thread_name

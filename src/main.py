@@ -5,7 +5,7 @@ from typing import Optional, cast
 import discord
 import tiktoken
 from base import Message
-from completion import generate_completion_response, process_response
+from completion import generate_completion_response, parse_thread_name, process_response
 from constants import (
     ACTIVATE_THREAD_PREFX,
     BOT_INVITE_URL,
@@ -25,7 +25,6 @@ from utils import (
     get_persona,
     is_last_message_stale,
     logger,
-    parse_thread_name,
     remove_last_bot_message,
     should_block,
 )
@@ -82,7 +81,9 @@ async def chat_command(
         # only support creating thread in text channel
         if not isinstance(int.channel, discord.TextChannel) or should_block(int.guild):
             return
-
+        # ADD FOLLOWUP
+        await int.response.defer(thinking=True)
+        follow_up = await int.followup.send("Creating thread...", wait=True)
         user = int.user
         try:
             persona_system = get_persona(persona.value if persona else None)
@@ -94,17 +95,16 @@ async def chat_command(
             )
             embed.add_field(name="Message :", value=f"> {message}")
 
-            await int.response.send_message(embed=embed)
-            response = await int.original_response()
+            await follow_up.edit(content="", embed=embed)
         except Exception as e:
             logger.exception(e)
-            await int.response.send_message(
-                f"Failed to start chat {str(e)}", ephemeral=True
-            )
+            await follow_up.edit(content=f"Failed to start chat {str(e)}")
             return
 
-        thread_name = await parse_thread_name(int, message)
-        thread = await response.create_thread(
+        thread_name = await parse_thread_name(int, message, follow_up)
+        logger.info(f"Thread name - {thread_name}")
+        thread = await int.channel.create_thread(
+            message=follow_up,
             name=f"{ACTIVATE_THREAD_PREFX} - {persona_system.icon} {thread_name}",
             reason=message,
             auto_archive_duration=60,

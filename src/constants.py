@@ -1,48 +1,44 @@
-import os
-from typing import List
+from pathlib import Path
 
-from dotenv import load_dotenv
+import yaml
 
-load_dotenv()
+# Load config
 
-DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
-DISCORD_CLIENT_ID = os.environ["DISCORD_CLIENT_ID"]
+config_path = Path("config.yaml")
+config = yaml.safe_load(Path("config.yml").open(encoding="utf-8"))
 
-OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
-OPENAI_API_URL = os.environ["OPENAI_API_URL"]
-OPENAI_MODEL = os.environ["OPENAI_MODEL"]
+tokens = config["tokens"]
+client = config["client"]
+configs = config["configs"]
+completion_config = configs["completions"]
+thread_config = configs["thread"]
 
-SYSTEM_MESSAGE = os.environ["SYSTEM_MESSAGE"]
-KNOWLEDGE_CUTOFF = os.environ["KNOWLEDGE_CUTOFF"]
+DISCORD_BOT_TOKEN = tokens["discord"]
+DISCORD_CLIENT_ID = client["id"]
 
-ALLOWED_SERVER_IDS: List[int] = []
-server_ids = os.environ["ALLOWED_SERVER_IDS"].split(", ")
-for s in server_ids:
-    ALLOWED_SERVER_IDS.append(int(s))
+OPENAI_API_KEY = tokens["open_ai"]
+OPENAI_API_URL = completion_config["url"]
+OPENAI_MODEL = completion_config["model"]
+
+SYSTEM_MESSAGE = completion_config["system_message"]
+KNOWLEDGE_CUTOFF = completion_config["knowledge_cutoff"]
+
+ALLOWED_SERVER_IDS: list[int] = client["allowed_servers"]
 
 
-# Send Messages
-# Create Public Threads
-# Send Messages in Threads
-# Manage Messages
-# Manage Threads
-# Read Message History
-# Use Slash Command
 BOT_INVITE_URL = f"https://discord.com\
 /api/oauth2/authorize\
 ?client_id={DISCORD_CLIENT_ID}\
 &permissions=328565073920\
 &scope=bot"
 
-SECONDS_DELAY_RECEIVING_MSG = (
-    1  # give a delay for the bot to respond so it can catch multiple messages
-)
-MAX_THREAD_MESSAGES = 200
-ACTIVATE_THREAD_PREFX = "💬"
-INACTIVATE_THREAD_PREFIX = "❌"
-MAX_CHARS_PER_REPLY_MSG = 2000  # discord has a 2k limit
-MAX_INPUTS_TOKENS = int(os.environ["MAX_INPUTS_TOKENS"])
+SECONDS_DELAY_RECEIVING_MSG = completion_config["delay"]
 
-THREAD_NAME = str(os.environ["THREAD_NAME"] or "[{{date}}-{{time}}] {{author}} ")
-DATE_FORMAT = os.environ["DATE_FORMAT"] or "%Y-%m-%d"
-TIME_FORMAT = os.environ["TIME_FORMAT"] or "%H:%M:%S"
+ACTIVATE_THREAD_PREFX = thread_config["prefix"]["active"]
+INACTIVATE_THREAD_PREFIX = thread_config["prefix"]["inactive"]
+MAX_CHARS_PER_REPLY_MSG = thread_config["max_char_reply"]
+MAX_INPUTS_TOKENS = completion_config["max_input_token"]
+
+THREAD_NAME = thread_config["format"].get("title", "[{{date}}-{{time}}] {{author}}")
+DATE_FORMAT = thread_config["format"].get("date", "%Y-%m-%d")
+TIME_FORMAT = thread_config["format"].get("time", "%H:%M:%S")

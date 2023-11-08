@@ -1,4 +1,3 @@
-import json
 import logging
 import typing
 from datetime import datetime
@@ -7,22 +6,18 @@ from typing import Any, List, Optional
 
 import discord
 import tiktoken
+import yaml
 from base import InteractionChannel, Message, MessageableChannel, Persona
 from constants import (
     ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER_IDS,
-    DATE_FORMAT,
     INACTIVATE_THREAD_PREFIX,
     KNOWLEDGE_CUTOFF,
     MAX_CHARS_PER_REPLY_MSG,
     SYSTEM_MESSAGE,
-    THREAD_NAME,
-    TIME_FORMAT,
 )
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
-
-from .completion import resume_message
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +142,7 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
 
 def get_persona(persona: str | None) -> Persona:
     """Get the persona from the persona.json file"""
-    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
     if persona:
         get_persona = all_personas.get(persona, None)
         if get_persona:
@@ -185,7 +180,7 @@ def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> i
 def get_persona_by_emoji(thread: Thread) -> Persona:
     # first emoji in the thread name
     emoji = thread.name.split(" ")[2]
-    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
     for persona, value in all_personas.items():
         if emoji in value.get("icon"):
             return Persona(
@@ -221,7 +216,7 @@ async def generate_initial_system(client: Client, thread: Thread) -> list[Messag
 
 
 def generate_choice_persona() -> list[discord.app_commands.Choice]:
-    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
     persona_list = []
     for persona, value in all_personas.items():
         persona_list.append(
@@ -258,31 +253,9 @@ def allowed_thread(
 
 
 def get_all_icons() -> list[str]:
-    all_personas = json.load(Path("persona.json").open(encoding="utf-8"))
+    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
     icon_list = []
     for persona, value in all_personas.items():
         icon_list.append(value.get("icon"))
     icon_list.append("🤖")
     return icon_list
-
-
-async def parse_thread_name(interaction: discord.Interaction, message: str) -> str:
-    gpt_message = Message(
-        user="user",
-        text=message,
-    )
-
-    accepted_value = {
-        "{{date}}": datetime.now().strftime(DATE_FORMAT),
-        "{{time}}": datetime.now().strftime(TIME_FORMAT),
-        "{{author}}": interaction.user.display_name[:10],
-        "{{message}}": message[:5],
-    }
-    thread_name = THREAD_NAME
-    for key, value in accepted_value.items():
-        thread_name = thread_name.replace(key, value)
-        if "{{resume}}" in thread_name:
-            resume = await resume_message(gpt_message, interaction)
-            if resume:
-                thread_name = thread_name.replace("{{resume}}", resume)
-    return thread_name

@@ -1,0 +1,29 @@
+tokens:
+  open_ai: # your OPEN AI keys
+  discord: # Your discord bot tokens
+client:
+  id: # Your discord bot client ID
+  allowed_servers:
+    - server1
+    - server2
+configs:
+  completions:
+    url: https://api.openai.com/v1/chat/completions
+    model: gpt-4-1106-preview
+    system_message: |
+      You are ChatGPT, a large language model trained by OpenAI.
+      Answer as concisely as possible.
+      __Knowledge cutoff__: {knowledge_cutoff}
+      __Current date__: {current_date}
+    knowledge_cutoff: 2023-04
+    max_input_token: 128000
+    delay: 1
+  thread:
+    format:
+      date: "%d-%m-%Y"
+      time: "%H:%M"
+      thread: "[{{date}}-{{time}}] - {{author}}: {{resume}}"
+    prefix:
+      active: "💬"
+      inactive: "❌"
+    max_char_reply: 2000

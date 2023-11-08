@@ -1,6 +1,6 @@
 A chat GPT bot based on the [Open AI example](https://github.com/openai/gpt-discord-bot) and [egbaydarov work](https://github.com/egbaydarov/gpt-discord-bot).
 
-- Supports the adding of "personas", custom prompt. You can add your with editing the file [persona.json](persona.json)
+- Supports the adding of "personas", custom prompt. You can add your with editing the file [persona.yml](persona.yml)
 - Support GPT-3, GPT-4 and further with editing an `.env` file.
 
 This bot uses the [OpenAI Python Library](https://github.com/openai/openai-python) and [discord.py](https://discordpy.readthedocs.io/). Tokens are counted by [tiktoken](https://github.com/openai/tiktoken).
@@ -35,46 +35,29 @@ You needs:
 
 ## Environment setup
 
-ENV EXAMPLE:
-```env
-OPENAI_API_KEY=
-DISCORD_BOT_TOKEN=
-DISCORD_CLIENT_ID=
-
-ALLOWED_SERVER_IDS=
-
-OPENAI_API_URL=https://api.openai.com/v1/chat/completions
-OPENAI_MODEL=gpt-4-1106-preview
-
-SYSTEM_MESSAGE="You are ChatGPT, a large language model trained by OpenAI.\nAnswer as concisely as possible.\n\n- __Knowledge cutoff__: {knowledge_cutoff}\n- __Current date__: {current_date}"
-KNOWLEDGE_CUTOFF="2023-04"
-MAX_INPUTS_TOKENS=128000
-THREAD_FORMAT = "[{{date}}-{{time}}] - {{author}}"
-# supported format :
-# - {{date}} : date of the message
-# - {{time}} : time of the message
-# - {{author}} : author of the message
-# - {{content}} : content of the message
-# - {{resume}} : resume of the message (ask gpt to resume the message)
-DATE_FORMAT="%Y-%m-%d"
-TIME_FORMAT="%H:%M"
-```
+See [`config.example.yml`](config.example.yml) for an example configuration file. You need to fill:
+- `tokens`, with:
+  - `open_ai` : your OpenAI API key
+  - `discord` : your Discord bot token
+- `client` :
+  - `id` : your Discord bot client ID
+  - `allowed_servers` : the allowed servers, in a form of a list. You can add multiple servers.
 
 Create an `.env` file, and start filling in the values detailed below:
-1. Go to https://beta.openai.com/account/api-keys, create a new API key, and fill in `OPENAI_API_KEY`
+1. Go to https://beta.openai.com/account/api-keys, create a new API key, and fill in `open_ai`
 2. Create your own Discord application at https://discord.com/developers/applications
-    - Click "Reset Token" and fill in `DISCORD_BOT_TOKEN`
+    - Click "Reset Token" and fill in `discord`
     - Disable "Public Bot" unless you want your bot to be visible to everyone
     - Enable "Message Content Intent" under "Privileged Gateway Intents"
-3. Go to the OAuth2 tab, copy your "Client ID", and fill in `DISCORD_CLIENT_ID`
-4. Copy the ID the server you want to allow your bot to be used in by right clicking the server icon and clicking "Copy ID". Fill in `ALLOWED_SERVER_IDS`. If you want to allow multiple servers, separate the IDs by ", " like `server_id_1, server_id_2`
-5. You can change the thread format with `THREAD_FORMAT` with the supported value enclosed by `{{}}`:
+3. Go to the OAuth2 tab, copy your "Client ID", and fill in `id` (`client` part).
+4. Copy the ID the server you want to allow your bot to be used in by right clicking the server icon and clicking "Copy ID". Fill in `allowed_servers`. If you want to allow multiple servers, create a simple list.
+5. You can change the thread format by editing the key `format.thread` in `configs.thread` with the supported value enclosed by `{{}}`:
   - `{{date}}` : date of the message
   - `{{time}}` : time of the message
   - `{{author}}` : author of the message
   - `{{content}}` : content of the message
   - `{{resume}}` : resume of the message (the resume will be in 4-5 words by Chat-GPT).
-6. You can change the date and time format with `DATE_FORMAT` and `TIME_FORMAT`. The format is the same as [strftime](https://strftime.org/).
+6. You can change the date and time format in `format` (keys `date` and `time`). The format is the same as [strftime](https://strftime.org/).
 
 
 ## Running the bot
