@@ -7,14 +7,20 @@ This bot uses the [OpenAI Python Library](https://github.com/openai/openai-pytho
 
 # Features
 
-- `/chat` starts a public thread, with a `message` argument which is the first user message passed to the bot
+- `/chat` starts a public thread, with a `message` argument which is the first user message passed to the bot and an optional persona. 
 - Optionally, you can add a persona. Get persona information using `/help <persona>`
 - The model will generate a reply for every user message in any threads started with `/chat`
 - The entire thread will be passed to the model for each request, so the model will remember previous messages in the thread
-- when the context limit is reached, or a max message count is reached in the thread, bot will close the thread
-- you can customize the bot instructions by modifying `.env` and add more persona directly with editing the json file (no need to edit the code!)
+- The number of inputs token will be count, and when the limit reached (set by `MAX_INPUTS_TOKENS`), the thread will be closed.
+- You can customize the bot instructions by modifying `.env` and add more persona directly with editing the json file (no need to edit the code!)
 
-The bot also count the number of token in thread, and it automatically closes the thread when the number of tokens exceeds the set value.
+## Commands
+
+- `/chat [message] (persona)` : Open a new chat.
+  - Each persona have their proper emoji (icon) and the context is recognized by the thread name, where the second emoji is the icon. Don't change it manually!
+- `/help <persona>` : Give instruction for the persona
+- `/change <persona>` : Change the persona used in the thread.
+  - For this command, it will need the second emoji in the thread name to recognize the old persona and change it to the new persona.
 
 # Setup
 ## Before creating the bot
