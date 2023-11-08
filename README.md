@@ -1,6 +1,6 @@
 A chat GPT bot based on the [Open AI example](https://github.com/openai/gpt-discord-bot) and [egbaydarov work](https://github.com/egbaydarov/gpt-discord-bot).
 
-- Supports the adding of "personas", custom prompt. You can add your with editing the file [personas.json](personas.json)
+- Supports the adding of "personas", custom prompt. You can add your with editing the file [persona.json](persona.json)
 - Support GPT-3, GPT-4 and further with editing an `.env` file.
 
 This bot uses the [OpenAI Python Library](https://github.com/openai/openai-python) and [discord.py](https://discordpy.readthedocs.io/). Tokens are counted by [tiktoken](https://github.com/openai/tiktoken).
