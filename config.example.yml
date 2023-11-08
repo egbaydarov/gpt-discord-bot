@@ -22,7 +22,7 @@ configs:
     format:
       date: "%d-%m-%Y"
       time: "%H:%M"
-      thread: "[{{date}}-{{time}}] - {{author}}: {{resume}}"
+      title: "[{{date}}-{{time}}] - {{author}}: {{resume}}"
     prefix:
       active: "💬"
       inactive: "❌"

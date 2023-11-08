@@ -35,29 +35,49 @@ You needs:
 
 ## Environment setup
 
-See [`config.example.yml`](config.example.yml) for an example configuration file. You need to fill:
-- `tokens`, with:
-  - `open_ai` : your OpenAI API key
-  - `discord` : your Discord bot token
-- `client` :
-  - `id` : your Discord bot client ID
-  - `allowed_servers` : the allowed servers, in a form of a list. You can add multiple servers.
+Rename the [`config.example.yml`](config.example.yml) file to `config.yml` and fill the required fields.
 
-Create an `.env` file, and start filling in the values detailed below:
-1. Go to https://beta.openai.com/account/api-keys, create a new API key, and fill in `open_ai`
+### Before you begin:
+1. Go to https://beta.openai.com/account/api-keys, create a new API key.
 2. Create your own Discord application at https://discord.com/developers/applications
-    - Click "Reset Token" and fill in `discord`
+    - Click "Reset Token" and copy your bot token
     - Disable "Public Bot" unless you want your bot to be visible to everyone
     - Enable "Message Content Intent" under "Privileged Gateway Intents"
-3. Go to the OAuth2 tab, copy your "Client ID", and fill in `id` (`client` part).
-4. Copy the ID the server you want to allow your bot to be used in by right clicking the server icon and clicking "Copy ID". Fill in `allowed_servers`. If you want to allow multiple servers, create a simple list.
-5. You can change the thread format by editing the key `format.thread` in `configs.thread` with the supported value enclosed by `{{}}`:
-  - `{{date}}` : date of the message
-  - `{{time}}` : time of the message
-  - `{{author}}` : author of the message
-  - `{{content}}` : content of the message
-  - `{{resume}}` : resume of the message (the resume will be in 4-5 words by Chat-GPT).
-6. You can change the date and time format in `format` (keys `date` and `time`). The format is the same as [strftime](https://strftime.org/).
+3. Go to the OAuth2 tab, copy your "Client ID".
+4. Save the id of the server you wish to autorize, by right clicking the server icon and clicking "Copy ID".
+
+### Step 1 : Understanding the config file structure
+- `tokens`: Section for storing your API keys.
+- `client`: Contains your bot's ID and the list of authorized servers.
+- `configs`: Configurations regarding calls to the OpenAI API and formatting of Discord message threads.
+
+### Step 2 : Enter your API tokens:
+- `open_ai`: Replace # your OPEN AI keys with your actual OpenAI API key.
+- `discord`: Replace # Your discord bot tokens with your Discord bot token.
+
+### Step 3: Add your discord bot details
+- `id`: Replace # Your discord bot client ID with your bot's client ID.
+- `allowed_servers`: A list of IDs for servers where the bot is permitted:
+  - Replace server1, server2 with the actual server IDs. Remove the second line if you only have one server.
+
+### Step 4 : Configure OpenAI Settings and System messages: (Optional)
+
+Under `completions`, fill in the API URL, the model, the customized system default message, knowledge cutoff date, input limitation, and delay.
+
+### Step 5 : Configure Thread and message format: (Optional)
+
+In the `thread` section, adjust the configuration for the date and time formats.
+For title, use the authorized keys are:
+- `{{date}}` : date of the message, in the format specified by the `date` key.
+- `{{time}}` : time of the message, in the format specified by the `time` key
+- `{{author}}` : Author of the message asking for a chat with the bot
+- `{{content}}` : Content of question send to the bot
+- `{{resume}}` : Resume of the message (the resume will be in 2-3 words words by Chat-GPT).
+
+> [!NOTE]
+> For `{{date}}` and `{{time}}` format, you need to use the [Python datetime format](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes). For example, if you want to use the format `DD/MM/YYYY`, you need to use `%d/%m/%Y`.
+
+You can customize the prefix (active and inactive) and the number of characters per reply.
 
 
 ## Running the bot
