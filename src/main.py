@@ -171,24 +171,10 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
             f"Thread message to process - {message.author}: {message.content[:50]} - {thread.name} {thread.jump_url}"
         )
 
-        # prepare the initial system message
-        if message.content.lower().strip() == "$$stop":
-            await close_thread(thread)
-            return
-        # generate the response
         async with thread.typing():
             response_data = await generate_completion_response(
                 messages=channel_messages
             )
-
-        # if the message is == "/rerun" then rerun with the same message before the /rerun and the last reply of the bot
-        if message.content.lower() == "$$rerun":
-            await message.delete()
-            # remove the last message from the channel_messages
-            async with thread.typing():
-                response_data = await generate_completion_response(
-                    messages=remove_last_bot_message(channel_messages[:-1])
-                )
 
         if is_last_message_stale(
             interaction_message=message,
@@ -258,6 +244,48 @@ async def change_persona(
             f"Failed to change persona to {persona_system.title}",
             ephemeral=True,
         )
+
+
+@tree.command(name="close", description="Stop the chat and archive the thread")
+async def stop(int: discord.Interaction) -> None:
+    logger.info(f"Closing thread in Guild: {int.guild}")
+    # followup
+    await int.response.defer()
+    follow_up = await int.followup.send("Closing thread...", wait=True, ephemeral=True)
+    if not allowed_thread(client, int.channel, int.guild, int.user):
+        await int.response.send_message(
+            "This command can only be used in a thread created by the bot",
+            ephemeral=True,
+        )
+        return
+    thread = cast(discord.Thread, int.channel)
+    await close_thread(thread)
+    await follow_up.delete()
+
+
+@tree.command(name="rerun", description="Rerun the last message")
+async def rerun(int: discord.Interaction) -> None:
+    if not allowed_thread(client, int.channel, int.guild, int.user):
+        await int.response.send_message(
+            "This command can only be used in a thread created by the bot",
+            ephemeral=True,
+        )
+        return
+    await int.response.defer()
+    follow_up = await int.followup.send("Rerunning...", wait=True, ephemeral=True)
+    thread = cast(discord.Thread, int.channel)
+    channel_messages = await generate_initial_system(client, thread)
+    try:
+        async with thread.typing():
+            response_data = await generate_completion_response(
+                messages=remove_last_bot_message(channel_messages[:-1])
+            )
+            await process_response(thread=thread, response_data=response_data)
+    except Exception as e:
+        logger.exception(e)
+        await follow_up.edit(content=f"Failed to rerun: {str(e)}")
+        return
+    await follow_up.delete()
 
 
 client.run(DISCORD_BOT_TOKEN)
