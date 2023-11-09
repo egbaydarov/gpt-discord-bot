@@ -83,6 +83,8 @@ async def process_response(
             )
         else:
             shorter_response = split_into_shorter_messages(reply_text)
+            # remove empty messages in shorter_response
+            shorter_response = [r for r in shorter_response if len(r) > 0]
             for r in shorter_response:
                 if len(r) > MAX_CHARS_PER_REPLY_MSG:
                     file = discord.File(io.StringIO(r), "message.txt")  # type: ignore

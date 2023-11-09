@@ -125,10 +125,10 @@ async def chat_command(
             response_data = await generate_completion_response(
                 messages=messages,
             )
-            # send the result
             await process_response(thread=thread, response_data=response_data)
+
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         await int.response.send_message(
             f"Failed to start chat {str(e)}", ephemeral=True
         )
