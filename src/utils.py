@@ -121,7 +121,7 @@ async def close_thread(thread: discord.Thread) -> None:
     await thread.edit(name=INACTIVATE_THREAD_PREFIX)
     await thread.send(
         embed=discord.Embed(
-            description="**Thread closed** - Context limit reached, closing...",
+            description="**Thread closed**...",
             color=discord.Color.blue(),
         )
     )
