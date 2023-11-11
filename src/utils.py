@@ -1,8 +1,9 @@
 import logging
+import textwrap
 import typing
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 import discord
 import tiktoken
@@ -10,6 +11,7 @@ import yaml
 from base import InteractionChannel, Message, MessageableChannel, Persona
 from constants import (
     ACTIVATE_THREAD_PREFX,
+    ALLOWED_SERVER,
     ALLOWED_SERVER_IDS,
     INACTIVATE_THREAD_PREFIX,
     KNOWLEDGE_CUTOFF,
@@ -204,6 +206,7 @@ def get_persona_by_emoji(thread: Thread) -> Persona:
 
 async def generate_initial_system(client: Client, thread: Thread) -> list[Message]:
     system_message = get_persona_by_emoji(thread).system
+
     user = typing.cast(ClientUser, client.user)
     channel_messages = [
         discord_message_to_message(message=message, bot_name=user.name)
@@ -259,3 +262,35 @@ def get_all_icons() -> list[str]:
         icon_list.append(value.get("icon"))
     icon_list.append("🤖")
     return icon_list
+
+
+async def send_to_log_channel(  # noqa
+    client: Client,
+    guild_id: int,
+    thread_name: str,
+    user: str,
+    persona: Persona | None,
+    type: Literal["new", "created", "changed", "closed"],
+) -> None:
+    """Send a message to the log channel"""
+    log_channel = list([i for i in ALLOWED_SERVER if guild_id in i][0].values())[0]
+    log_channel = client.get_channel(log_channel)
+    message = ""
+    match type:
+        case "new":
+            message = "New message received"
+        case "created":
+            message = "Thread created"
+        case "changed":
+            message = "Persona changed"
+        case "closed":
+            message = "Thread closed"
+    if log_channel and isinstance(log_channel, discord.TextChannel):
+        message = f"""
+        **{message}**
+        - __Thread name__: `{thread_name}`
+        - __User__: `{user}`
+        """
+        if persona:
+            message += f"- __Persona__: `{persona.title}`"
+        await log_channel.send(textwrap.dedent(message))

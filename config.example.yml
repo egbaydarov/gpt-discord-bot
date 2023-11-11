@@ -4,8 +4,9 @@ tokens:
 client:
   id: # Your discord bot client ID
   allowed_servers:
-    - server1
-    - server2
+    - server1_id: log_channel_id
+    - server2_id: log_channel_id
+
 configs:
   completions:
     url: https://api.openai.com/v1/chat/completions

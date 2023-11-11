@@ -23,7 +23,8 @@ OPENAI_MODEL = completion_config["model"]
 SYSTEM_MESSAGE = completion_config["system_message"]
 KNOWLEDGE_CUTOFF = completion_config["knowledge_cutoff"]
 
-ALLOWED_SERVER_IDS: list[int] = client["allowed_servers"]
+ALLOWED_SERVER_IDS: list[int] = [k for d in client["allowed_servers"] for k in d.keys()]
+ALLOWED_SERVER = client["allowed_servers"]
 
 
 BOT_INVITE_URL = f"https://discord.com\

@@ -23,9 +23,11 @@ from utils import (
     generate_initial_system,
     get_all_icons,
     get_persona,
+    get_persona_by_emoji,
     is_last_message_stale,
     logger,
     remove_last_bot_message,
+    send_to_log_channel,
     should_block,
 )
 
@@ -102,7 +104,7 @@ async def chat_command(
             return
 
         thread_name = await parse_thread_name(int, message, follow_up)
-        logger.info(f"Thread name - {thread_name}")
+
         thread = await int.channel.create_thread(
             message=follow_up,
             name=f"{ACTIVATE_THREAD_PREFX} - {persona_system.icon} {thread_name}",
@@ -116,7 +118,16 @@ async def chat_command(
                 .replace("\n", "")
                 .replace("__", "")
             )  # remove newlines
-            logger.info(f"Thread created - {user}: {message}")
+            logger.info(f"Thread created - {user.global_name}: {message}")
+
+            await send_to_log_channel(
+                client,
+                int.guild.id,  # type: ignore
+                thread.name,
+                user.global_name,  # type: ignore
+                persona_system,
+                "new",
+            )
             # fetch completion
             messages = [
                 Message(user="system", text=system_message),
@@ -150,6 +161,15 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
 
         thread = cast(discord.Thread, message.channel)
         channel_messages = await generate_initial_system(client, thread)
+        persona_log = get_persona_by_emoji(thread)
+        await send_to_log_channel(
+            client,
+            message.guild.id,  # type: ignore
+            thread.name,
+            message.author.global_name,  # type: ignore
+            persona_log,
+            "new",
+        )
         nb_tokens = count_token_message(channel_messages, model)
 
         if nb_tokens > MAX_INPUTS_TOKENS:
@@ -236,6 +256,14 @@ async def change_persona(
     if icon in icon_list:
         thread_name[2] = persona_system.icon
         await thread.edit(name=" ".join(thread_name))
+        await send_to_log_channel(
+            client,
+            int.guild.id,  # type: ignore
+            thread.name,
+            int.user.global_name,  # type: ignore
+            persona_system,
+            "new",
+        )
         await int.response.send_message(
             f"Changed persona to {persona_system.title}", ephemeral=True
         )
@@ -260,6 +288,15 @@ async def stop(int: discord.Interaction) -> None:
         return
     thread = cast(discord.Thread, int.channel)
     await close_thread(thread)
+
+    await send_to_log_channel(
+        client,
+        int.guild.id,  # type: ignore
+        thread.name,
+        user=int.user.global_name,  # type: ignore
+        persona=None,
+        type="new",
+    )
     await follow_up.delete()
 
 
@@ -275,6 +312,16 @@ async def rerun(int: discord.Interaction) -> None:
     follow_up = await int.followup.send("Rerunning...", wait=True, ephemeral=True)
     thread = cast(discord.Thread, int.channel)
     channel_messages = await generate_initial_system(client, thread)
+    log_persona = get_persona_by_emoji(thread)
+
+    await send_to_log_channel(
+        client,
+        int.guild.id,  # type: ignore
+        thread.name,
+        int.user.global_name,  # type: ignore
+        log_persona,
+        "new",
+    )
     try:
         async with thread.typing():
             response_data = await generate_completion_response(
