@@ -48,7 +48,7 @@ Rename the [`config.example.yml`](config.example.yml) file to `config.yml` and f
 
 ### Step 1 : Understanding the config file structure
 - `tokens`: Section for storing your API keys.
-- `client`: Contains your bot's ID and the list of authorized servers.
+- `client`: Contains your bot's ID and the list of authorized servers with their logs channel.
 - `configs`: Configurations regarding calls to the OpenAI API and formatting of Discord message threads.
 
 ### Step 2 : Enter your API tokens:
@@ -59,6 +59,7 @@ Rename the [`config.example.yml`](config.example.yml) file to `config.yml` and f
 - `id`: Replace # Your discord bot client ID with your bot's client ID.
 - `allowed_servers`: A list of IDs for servers where the bot is permitted:
   - Replace server1, server2 with the actual server IDs. Remove the second line if you only have one server.
+  - replace `log_channel_id` with the channel ID where you want to log the bot activity. Leave empty to disable.
 
 ### Step 4 : Configure OpenAI Settings and System messages: (Optional)
 

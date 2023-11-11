@@ -23,7 +23,11 @@ OPENAI_MODEL = completion_config["model"]
 SYSTEM_MESSAGE = completion_config["system_message"]
 KNOWLEDGE_CUTOFF = completion_config["knowledge_cutoff"]
 
-ALLOWED_SERVER_IDS: list[int] = [k for d in client["allowed_servers"] for k in d.keys()]
+try:
+    ALLOWED_SERVER_IDS = [k for d in client["allowed_servers"] for k in d.keys()]
+except Exception as e:
+    ALLOWED_SERVER_IDS = client["allowed_servers"]
+    print("Error in config.yaml: ", e)
 ALLOWED_SERVER = client["allowed_servers"]
 
 

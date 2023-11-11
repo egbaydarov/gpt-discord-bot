@@ -273,24 +273,28 @@ async def send_to_log_channel(  # noqa
     type: Literal["new", "created", "changed", "closed"],
 ) -> None:
     """Send a message to the log channel"""
-    log_channel = list([i for i in ALLOWED_SERVER if guild_id in i][0].values())[0]
-    log_channel = client.get_channel(log_channel)
-    message = ""
-    match type:
-        case "new":
-            message = "New message received"
-        case "created":
-            message = "Thread created"
-        case "changed":
-            message = "Persona changed"
-        case "closed":
-            message = "Thread closed"
-    if log_channel and isinstance(log_channel, discord.TextChannel):
-        message = f"""
-        **{message}**
-        - __Thread name__: `{thread_name}`
-        - __User__: `{user}`
-        """
-        if persona:
-            message += f"- __Persona__: `{persona.title}`"
-        await log_channel.send(textwrap.dedent(message))
+    try:
+        log_channel = list([i for i in ALLOWED_SERVER if guild_id in i][0].values())[0]
+        log_channel = client.get_channel(log_channel)
+        message = ""
+        match type:
+            case "new":
+                message = "New message received"
+            case "created":
+                message = "Thread created"
+            case "changed":
+                message = "Persona changed"
+            case "closed":
+                message = "Thread closed"
+        if log_channel and isinstance(log_channel, discord.TextChannel):
+            message = f"""
+            **{message}**
+            - __Thread name__: `{thread_name}`
+            - __User__: `{user}`
+            """
+            if persona:
+                message += f"- __Persona__: `{persona.title}`"
+            await log_channel.send(textwrap.dedent(message))
+    except Exception as e:
+        logger.exception(e)
+        return
