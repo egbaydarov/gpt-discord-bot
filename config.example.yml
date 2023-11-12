@@ -12,6 +12,15 @@ client:
           changed: true
           created: true
           closed: true
+    - id: # server 2 id
+    - id: # server 3 id..
+      logs: # can be removed to disable
+        channel_id: # log id,
+        event:
+          message: false # set all to false to disable
+          changed: false
+          created: false
+          closed: false
 
 configs:
   completions:

@@ -57,9 +57,16 @@ Rename the [`config.example.yml`](config.example.yml) file to `config.yml` and f
 
 ### Step 3: Add your discord bot details
 - `id`: Replace # Your discord bot client ID with your bot's client ID.
-- `allowed_servers`: A list of IDs for servers where the bot is permitted:
-  - Replace server1, server2 with the actual server IDs. Remove the second line if you only have one server.
-  - replace `log_channel_id` with the channel ID where you want to log the bot activity. Leave empty to disable.
+- `allowed_servers`: A list of IDs for servers where the bot is permitted and their configuration:
+  - `id`: The ID of the server.
+  - `logs` : Allow to configure moderation/logs message. Remove if you don't want to use. You can also configure the sended message:
+    - `channel_id` : The ID of the channel where the bot will send the message.
+    - event: (each key take a boolean value)
+      - `message` : send a message for **each message send in a thread** (except the bot message)
+      - `created` : send a message when a thread is **created**
+      - `closed` : send a message when the thread is **closed**
+      - `changed` : send a message when a **persona is changed**
+
 
 ### Step 4 : Configure OpenAI Settings and System messages: (Optional)
 
