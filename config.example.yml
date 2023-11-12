@@ -2,10 +2,16 @@ tokens:
   open_ai: # your OPEN AI keys
   discord: # Your discord bot tokens
 client:
-  id: # Your discord bot client ID
+  id: # client bot ID
   allowed_servers:
-    - server1_id: log_channel_id
-    - server2_id: log_channel_id
+    - id: # server id
+      logs: # can be removed to disable
+        channel_id: # log id,
+        event:
+          message: true # set all to false to disable
+          changed: true
+          created: true
+          closed: true
 
 configs:
   completions:

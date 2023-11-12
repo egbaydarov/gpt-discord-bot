@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Literal, Optional, Union
+from xmlrpc.client import boolean
 
 from discord import (
     CategoryChannel,
@@ -39,6 +40,19 @@ class Persona:
             "system": self.system,
             "color": self.color,
             "title": self.title,
+        }
+        return result
+
+
+@dataclass(frozen=True)
+class ChannelLogs:
+    channel_id: int
+    event: dict[Literal["message", "changed", "created", "closed"], boolean]
+
+    def render(self):  # noqa
+        result = {
+            "channel_id": self.channel_id,
+            "event": self.event,
         }
         return result
 

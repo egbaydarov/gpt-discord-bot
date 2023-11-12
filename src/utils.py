@@ -1,25 +1,21 @@
 import logging
 import textwrap
 import typing
-from datetime import datetime
-from pathlib import Path
 from typing import Any, List, Literal, Optional
 
 import discord
 import tiktoken
-import yaml
-from base import InteractionChannel, Message, MessageableChannel, Persona
+from base import ChannelLogs, InteractionChannel, Message, MessageableChannel, Persona
 from constants import (
     ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER,
     ALLOWED_SERVER_IDS,
     INACTIVATE_THREAD_PREFIX,
-    KNOWLEDGE_CUTOFF,
     MAX_CHARS_PER_REPLY_MSG,
-    SYSTEM_MESSAGE,
 )
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
+from personas import get_persona_by_emoji
 
 logger = logging.getLogger(__name__)
 
@@ -142,32 +138,6 @@ def should_block(guild: Optional[discord.Guild]) -> bool:
     return False
 
 
-def get_persona(persona: str | None) -> Persona:
-    """Get the persona from the persona.json file"""
-    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
-    if persona:
-        get_persona = all_personas.get(persona, None)
-        if get_persona:
-            # convert to Persona object
-            return Persona(
-                name=persona if persona else "default",
-                icon=get_persona.get("icon", ""),
-                system=get_persona.get("system", ""),
-                color=get_persona.get("color", ""),
-                title=get_persona.get("name", ""),
-            )
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    return Persona(
-        name="GPT-4",
-        icon="🤖",
-        system=SYSTEM_MESSAGE.format(
-            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
-        ),
-        title="GPT-4",
-        color="#000000",
-    )
-
-
 def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> int:
     """Count the number of tokens in a list of messages
     Use the tiktoken API to count the number of tokens in a message
@@ -177,31 +147,6 @@ def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> i
         if message.text:
             token += len(models.encode(message.text))
     return token
-
-
-def get_persona_by_emoji(thread: Thread) -> Persona:
-    # first emoji in the thread name
-    emoji = thread.name.split(" ")[2]
-    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
-    for persona, value in all_personas.items():
-        if emoji in value.get("icon"):
-            return Persona(
-                name=persona,
-                icon=value.get("icon", ""),
-                system=value.get("system", ""),
-                color=value.get("color", ""),
-                title=value.get("name", ""),
-            )
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    return Persona(
-        name="GPT-4",
-        icon="🤖",
-        system=SYSTEM_MESSAGE.format(
-            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
-        ),
-        title="GPT-4",
-        color="#000000",
-    )
 
 
 async def generate_initial_system(client: Client, thread: Thread) -> list[Message]:
@@ -216,16 +161,6 @@ async def generate_initial_system(client: Client, thread: Thread) -> list[Messag
     channel_messages.append(Message(user="system", text=system_message))
     channel_messages.reverse()
     return channel_messages
-
-
-def generate_choice_persona() -> list[discord.app_commands.Choice]:
-    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
-    persona_list = []
-    for persona, value in all_personas.items():
-        persona_list.append(
-            discord.app_commands.Choice(name=value.get("keywords"), value=persona)
-        )
-    return persona_list
 
 
 def allowed_thread(
@@ -255,37 +190,41 @@ def allowed_thread(
     return True
 
 
-def get_all_icons() -> list[str]:
-    all_personas = yaml.safe_load(Path("persona.yml").open(encoding="utf-8"))
-    icon_list = []
-    for persona, value in all_personas.items():
-        icon_list.append(value.get("icon"))
-    icon_list.append("🤖")
-    return icon_list
-
-
 async def send_to_log_channel(  # noqa
     client: Client,
     guild_id: int,
     thread_name: str,
     user: str,
     persona: Persona | None,
-    type: Literal["new", "created", "changed", "closed"],
+    type: Literal["message", "created", "changed", "closed"],
 ) -> None:
     """Send a message to the log channel"""
     try:
-        log_channel = list([i for i in ALLOWED_SERVER if guild_id in i][0].values())[0]
-        log_channel = client.get_channel(log_channel)
+        logs = next((x for x in ALLOWED_SERVER if x["id"] == guild_id), None)
+        if not logs or logs.get("logs", None) is None:
+            return
+        logs = ChannelLogs(logs["logs"]["channel_id"], logs["logs"]["event"])
+        log_channel = client.get_channel(logs.channel_id)
         message = ""
+        logger.info(f"logs.event - {logs.event.get('message', False)}")
         match type:
-            case "new":
+            case "message":
                 message = "New message received"
+                if not logs.event.get("message", False):
+                    logger.info("logs.event.get('message', False) - True")
+                    return
             case "created":
                 message = "Thread created"
+                if not logs.event.get("created", False):
+                    return
             case "changed":
                 message = "Persona changed"
+                if not logs.event.get("changed", False):
+                    return
             case "closed":
                 message = "Thread closed"
+                if not logs.event.get("closed", False):
+                    return
         if log_channel and isinstance(log_channel, discord.TextChannel):
             message = f"""
             **{message}**

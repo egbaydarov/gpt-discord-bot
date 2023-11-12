@@ -24,7 +24,7 @@ SYSTEM_MESSAGE = completion_config["system_message"]
 KNOWLEDGE_CUTOFF = completion_config["knowledge_cutoff"]
 
 try:
-    ALLOWED_SERVER_IDS = [k for d in client["allowed_servers"] for k in d.keys()]
+    ALLOWED_SERVER_IDS = [int(i["id"]) for i in client["allowed_servers"]]
 except Exception as e:
     ALLOWED_SERVER_IDS = client["allowed_servers"]
     print("Error in config.yaml: ", e)

@@ -15,15 +15,17 @@ from constants import (
 )
 from discord import Message as DiscordMessage
 from discord.ext import commands
+from personas import (
+    generate_choice_persona,
+    get_all_icons,
+    get_persona,
+    get_persona_by_emoji,
+)
 from utils import (
     allowed_thread,
     close_thread,
     count_token_message,
-    generate_choice_persona,
     generate_initial_system,
-    get_all_icons,
-    get_persona,
-    get_persona_by_emoji,
     is_last_message_stale,
     logger,
     remove_last_bot_message,
@@ -126,7 +128,7 @@ async def chat_command(
                 thread.name,
                 user.global_name,  # type: ignore
                 persona_system,
-                "new",
+                "created",
             )
             # fetch completion
             messages = [
@@ -168,7 +170,7 @@ async def on_message(message: DiscordMessage) -> None:  # noqa
             thread.name,
             message.author.global_name,  # type: ignore
             persona_log,
-            "new",
+            "message",
         )
         nb_tokens = count_token_message(channel_messages, model)
 
@@ -262,7 +264,7 @@ async def change_persona(
             thread.name,
             int.user.global_name,  # type: ignore
             persona_system,
-            "new",
+            "changed",
         )
         await int.response.send_message(
             f"Changed persona to {persona_system.title}", ephemeral=True
@@ -295,7 +297,7 @@ async def stop(int: discord.Interaction) -> None:
         thread.name,
         user=int.user.global_name,  # type: ignore
         persona=None,
-        type="new",
+        type="closed",
     )
     await follow_up.delete()
 
@@ -320,7 +322,7 @@ async def rerun(int: discord.Interaction) -> None:
         thread.name,
         int.user.global_name,  # type: ignore
         log_persona,
-        "new",
+        "message",
     )
     try:
         async with thread.typing():
