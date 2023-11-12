@@ -239,9 +239,10 @@ async def chat_multiple(
             return message.author == int.user and message.channel == int.channel
 
         messages = []
-        await int.response.defer()
-        followup = await int.followup.send(
-            "Waiting for messages...", wait=True, ephemeral=True
+        channel = cast(discord.TextChannel, int.channel)
+        await channel.send(
+            "Starting chat, please send your message in the next 60 seconds",
+            delete_after=30,
         )
 
         async def message_wait_for() -> list[str]:
@@ -252,24 +253,25 @@ async def chat_multiple(
                     msg = await client.wait_for("message", check=check, timeout=60)
 
                     if msg.content.lower() in ("$end", "$done", "$stop"):
-                        await msg.reply("End of message", delete_after=10)
-                        break
+                        await msg.reply("End of message", delete_after=5)
+                        return message
                     elif msg.content.lower() in ("$cancel"):
-                        await msg.reply("Canceling", delete_after=10)
+                        await msg.reply("Canceling", delete_after=5)
                         return []
                     else:
                         message.append(msg.content)
-                        await msg.reply("Message received", delete_after=10)
+                        await msg.reply("Message received", delete_after=5)
+                    await msg.delete()
             except asyncio.TimeoutError:
                 await channel.send("Timeout, stopping the chat", delete_after=10)
-            return message  # remove the "done" message
+                return []
 
         messages = await message_wait_for()
         if len(messages) == 0:
-            await followup.delete()
             return
+
         message = first_message + "\n" + "\n".join(messages)
-        await chat(client, int, message, persona, follow_up=followup)
+        await chat(client, int, message, persona, follow_up=None)
 
     except Exception as e:
         logger.error(e)
