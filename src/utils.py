@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import textwrap
 import typing
@@ -15,6 +16,7 @@ from constants import (
 )
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
+from discord.ext.commands import Bot
 from personas import get_persona_by_emoji
 
 logger = logging.getLogger(__name__)
@@ -237,3 +239,25 @@ async def send_to_log_channel(  # noqa
     except Exception as e:
         logger.exception(e)
         return
+
+
+async def wait_for_message(int: discord.Interaction, bot: Bot):
+    rep = []
+    try:
+        message = await bot.wait_for(
+            "message",
+            check=lambda m: m.author == int.user and m.channel == int.channel,
+        )
+        if message.content.lower() == "cancel":
+            await int.response.send_message("Cancelled", ephemeral=True)
+            return
+        elif message.content.lower() in ("end", "done", "stop"):
+            return
+        rep.append(message.content)
+        await wait_for_message(int, bot)
+    except asyncio.TimeoutError:
+        await int.response.send_message("Timed out", ephemeral=True)
+        return
+    finally:
+        reponse = "\n".join(rep)
+        return reponse
