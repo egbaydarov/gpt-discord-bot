@@ -67,7 +67,6 @@ Rename the [`config.example.yml`](config.example.yml) file to `config.yml` and f
       - `closed` : send a message when the thread is **closed**
       - `changed` : send a message when a **persona is changed**
 
-
 ### Step 4 : Configure OpenAI Settings and System messages: (Optional)
 
 Under `completions`, fill in the API URL, the model, the customized system default message, knowledge cutoff date, input limitation, and delay.
@@ -87,7 +86,6 @@ For title, use the authorized keys are:
 
 You can customize the prefix (active and inactive) and the number of characters per reply.
 
-
 ## Running the bot
 
 Install the dependencies:
@@ -102,8 +100,24 @@ You should see an invite URL in the console. Copy and paste it into your browser
 > Make sure you use 3.11 python version.
 > The bot doesn't work with 3.12 yet.
 
-## Optional configuration
+## Private persona
 
-- If you want to change the model used, you can do so in `OPENAI_MODEL`. Currently only `gpt-3.5-turbo`, `gpt-4`, `gpt-4-1106-preview` work with the present codebase.
-- You can change the default prompt by editing the `SYSTEM_MESSAGE` with optional variables enclosed in `{`curly braces`}`. Currently the only variables available are `current_date` and `knowledge_cutoff`, with the latter being equivalent to the environment variable of the same name. The former is always in ISO 8601 format.
-- You can edit the number of maximum token with editing the `MAX_INPUTS_TOKENS`. [Check here for information about inputs tokens](https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo).
+You can create a file named `persona.private.yml` and add your private persona. The file will be ignored by git.
+
+> [!WARNING]
+> The format must be same as the `persona.yml` file.
+
+### Persona format
+
+Each persona is a dictionary with the following keys:
+
+```yaml
+persona_name:
+  system: |
+    prompt of the persona
+    in multiple line if you want
+  icon: emoji
+  name: "name of the persona"
+  color: "#hexadecimal color"
+  keywords: short persona name (for command selection)
+```
