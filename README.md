@@ -120,4 +120,5 @@ persona_name:
   name: "name of the persona"
   color: "#hexadecimal color"
   keywords: short persona name (for command selection)
+  model: #optional, will be set to your configuration model by default
 ```
