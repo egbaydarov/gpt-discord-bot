@@ -207,10 +207,10 @@ async def rerun(int: discord.Interaction) -> None:
         "message",
         token=nb_tokens,
     )
-
     if nb_tokens > MAX_INPUTS_TOKENS:
         await close_thread(thread)
         return
+
     try:
         async with thread.typing():
             response_data = await generate_completion_response(

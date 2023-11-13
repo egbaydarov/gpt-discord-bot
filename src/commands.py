@@ -69,8 +69,8 @@ async def chat(
         async with thread.typing():
             # prepare the initial system message
             system_message = (
-                persona_system.system.replace("\n-", "")
-                .replace("\n", "")
+                persona_system.system.replace("\n-", " ")
+                .replace("\n", " ")
                 .replace("__", "")
             )  # remove newlines
             logger.info(f"Thread created - {user.global_name}: {message}")

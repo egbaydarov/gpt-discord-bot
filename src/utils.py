@@ -152,7 +152,12 @@ def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> i
 
 
 async def generate_initial_system(client: Client, thread: Thread) -> list[Message]:
-    system_message = get_persona_by_emoji(thread).system
+    system_message = (
+        get_persona_by_emoji(thread)
+        .system.replace("\n-", " ")
+        .replace("\n", " ")
+        .replace("__", "")
+    )  # type: ignore
 
     user = typing.cast(ClientUser, client.user)
     channel_messages = [
