@@ -18,7 +18,7 @@ DISCORD_CLIENT_ID = client["id"]
 
 OPENAI_API_KEY = tokens["open_ai"]
 OPENAI_API_URL = completion_config["url"]
-OPENAI_MODEL = completion_config["model"]
+OPENAI_DEFAULT_MODEL = completion_config["model"]
 
 SYSTEM_MESSAGE = completion_config["system_message"]
 KNOWLEDGE_CUTOFF = completion_config["knowledge_cutoff"]

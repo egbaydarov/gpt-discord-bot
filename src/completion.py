@@ -12,7 +12,7 @@ from constants import (
     MAX_CHARS_PER_REPLY_MSG,
     OPENAI_API_KEY,
     OPENAI_API_URL,
-    OPENAI_MODEL,
+    OPENAI_DEFAULT_MODEL,
     THREAD_NAME,
     TIME_FORMAT,
 )
@@ -34,7 +34,7 @@ class CompletionData:
 
 async def generate_completion_response(
     messages: List[Message],
-    model: str = OPENAI_MODEL,
+    model: str = OPENAI_DEFAULT_MODEL,
 ) -> CompletionData:
     try:
         async with aiohttp.ClientSession() as session:
