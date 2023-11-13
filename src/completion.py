@@ -34,13 +34,14 @@ class CompletionData:
 
 async def generate_completion_response(
     messages: List[Message],
+    model: str = OPENAI_MODEL,
 ) -> CompletionData:
     try:
         async with aiohttp.ClientSession() as session:
             messages = [message.render() for message in messages]  # type: ignore
             async with session.post(
                 url=OPENAI_API_URL,
-                json={"model": OPENAI_MODEL, "messages": messages},
+                json={"model": model, "messages": messages},
                 auth=aiohttp.BasicAuth("", OPENAI_API_KEY),
             ) as r:
                 if r.status == 200:  # noqa
@@ -110,7 +111,7 @@ async def resume_message(
         text="Resume the message in 1 to 3 words please, with keeping the language used by the user.",
     )
     messages = [system_message, message]
-    response_data = await generate_completion_response(messages)
+    response_data = await generate_completion_response(messages, model="gpt-3.5-turbo")
     status = response_data.status
     reply_text = response_data.reply_text
     status_text = response_data.status_text

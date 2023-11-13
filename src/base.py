@@ -32,6 +32,7 @@ class Persona:
     system: str
     color: str
     title: str
+    model: str
 
     def render(self):  # noqa
         result = {
@@ -40,6 +41,7 @@ class Persona:
             "system": self.system,
             "color": self.color,
             "title": self.title,
+            "model": self.model,
         }
         return result
 

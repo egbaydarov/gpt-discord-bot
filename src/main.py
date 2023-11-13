@@ -201,7 +201,8 @@ async def rerun(int: discord.Interaction) -> None:
     try:
         async with thread.typing():
             response_data = await generate_completion_response(
-                messages=remove_last_bot_message(channel_messages[:-1])
+                messages=remove_last_bot_message(channel_messages[:-1]),
+                model=log_persona.model,
             )
             await process_response(thread=thread, response_data=response_data)
     except Exception as e:

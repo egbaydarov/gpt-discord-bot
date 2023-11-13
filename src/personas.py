@@ -5,7 +5,7 @@ from pathlib import Path
 import discord
 import yaml
 from base import Persona
-from constants import KNOWLEDGE_CUTOFF, SYSTEM_MESSAGE
+from constants import KNOWLEDGE_CUTOFF, OPENAI_MODEL, SYSTEM_MESSAGE
 from discord import Thread
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ def get_persona(persona: str | None) -> Persona:
                 system=get_persona.get("system", ""),
                 color=get_persona.get("color", ""),
                 title=get_persona.get("name", ""),
+                model=get_persona.get("model", OPENAI_MODEL),
             )
     current_date = datetime.now().strftime("%Y-%m-%d")
     return Persona(
@@ -48,6 +49,7 @@ def get_persona(persona: str | None) -> Persona:
         ),
         title="GPT-4",
         color="#000000",
+        model=OPENAI_MODEL,
     )
 
 
@@ -63,6 +65,7 @@ def get_persona_by_emoji(thread: Thread) -> Persona:
                 system=value.get("system", ""),
                 color=value.get("color", ""),
                 title=value.get("name", ""),
+                model=value.get("model", OPENAI_MODEL),
             )
     current_date = datetime.now().strftime("%Y-%m-%d")
     return Persona(
@@ -73,6 +76,7 @@ def get_persona_by_emoji(thread: Thread) -> Persona:
         ),
         title="GPT-4",
         color="#000000",
+        model=OPENAI_MODEL,
     )
 
 

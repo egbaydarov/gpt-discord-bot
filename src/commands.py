@@ -90,6 +90,7 @@ async def chat(
             ]
             response_data = await generate_completion_response(
                 messages=messages,
+                model=persona_system.model,
             )
             await process_response(thread=thread, response_data=response_data)
 
@@ -148,7 +149,8 @@ async def messages(
 
         async with thread.typing():
             response_data = await generate_completion_response(
-                messages=channel_messages
+                messages=channel_messages,
+                model=persona_log.model,
             )
 
         if is_last_message_stale(
