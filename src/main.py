@@ -106,7 +106,7 @@ async def help_command(
     embed.add_field(
         name="Model",
         value=f"{persona_system.model}",
-        inline=False,
+        inline=True,
     )
     await int.response.send_message(embed=embed)
 
