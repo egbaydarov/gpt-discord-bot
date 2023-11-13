@@ -118,6 +118,8 @@ async def messages(
         thread = cast(discord.Thread, message.channel)
         channel_messages = await generate_initial_system(client, thread)
         persona_log = get_persona_by_emoji(thread)
+        nb_tokens: int = count_token_message(channel_messages, model)
+
         await send_to_log_channel(
             client,
             message.guild.id,  # type: ignore
@@ -125,17 +127,9 @@ async def messages(
             message.author.global_name,  # type: ignore
             persona_log,
             "message",
+            token=nb_tokens,
         )
-        nb_tokens = count_token_message(channel_messages, model)
-        send_to_log_channel(
-            client,
-            message.guild.id,  # type: ignore
-            thread.name,
-            message.author.global_name,  # type: ignore
-            persona_log,
-            "token",
-            nb_tokens,
-        )
+
         if nb_tokens > MAX_INPUTS_TOKENS:
             await close_thread(thread)
             return

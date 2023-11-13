@@ -198,7 +198,7 @@ async def send_to_log_channel(  # noqa
     thread_name: str,
     user: str,
     persona: Persona | None,
-    type: Literal["message", "created", "changed", "closed", "token"],
+    type: Literal["message", "created", "changed", "closed"],
     token: Optional[int] = None,
 ) -> None:
     """Send a message to the log channel"""
@@ -216,6 +216,8 @@ async def send_to_log_channel(  # noqa
                 if not logs.event.get("message", False):
                     logger.info("logs.event.get('message', False) - True")
                     return
+                if token:
+                    message += f"\n- __Token count__: {token}"
             case "created":
                 message = "Thread created"
                 if not logs.event.get("created", False):
@@ -228,9 +230,7 @@ async def send_to_log_channel(  # noqa
                 message = "Thread closed"
                 if not logs.event.get("closed", False):
                     return
-            case "token":
-                if token:
-                    message = f"Token count: {token}"
+
         if log_channel and isinstance(log_channel, discord.TextChannel):
             message = f"""
             **{message}**

@@ -196,6 +196,7 @@ async def rerun(int: discord.Interaction) -> None:
     thread = cast(discord.Thread, int.channel)
     channel_messages = await generate_initial_system(client, thread)
     log_persona = get_persona_by_emoji(thread)
+    nb_tokens = count_token_message(channel_messages, MODEL)
 
     await send_to_log_channel(
         client,
@@ -204,18 +205,9 @@ async def rerun(int: discord.Interaction) -> None:
         int.user.global_name,  # type: ignore
         log_persona,
         "message",
+        token=nb_tokens,
     )
 
-    nb_tokens = count_token_message(channel_messages, MODEL)
-    send_to_log_channel(
-        client,
-        int.guild.id,  # type: ignore
-        thread.name,
-        int.author.global_name,  # type: ignore
-        log_persona,
-        "token",
-        nb_tokens,
-    )
     if nb_tokens > MAX_INPUTS_TOKENS:
         await close_thread(thread)
         return

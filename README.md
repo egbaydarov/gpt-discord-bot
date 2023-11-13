@@ -62,7 +62,7 @@ Rename the [`config.example.yml`](config.example.yml) file to `config.yml` and f
   - `logs` : Allow to configure moderation/logs message. Remove if you don't want to use. You can also configure the sended message:
     - `channel_id` : The ID of the channel where the bot will send the message.
     - event: (each key take a boolean value)
-      - `message` : send a message for **each message send in a thread** (except the bot message)
+      - `message` : send a message for **each message send in a thread** (except the bot message). Send also the number of token in the context.
       - `created` : send a message when a thread is **created**
       - `closed` : send a message when the thread is **closed**
       - `changed` : send a message when a **persona is changed**
