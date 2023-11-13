@@ -127,7 +127,15 @@ async def messages(
             "message",
         )
         nb_tokens = count_token_message(channel_messages, model)
-
+        send_to_log_channel(
+            client,
+            message.guild.id,  # type: ignore
+            thread.name,
+            message.author.global_name,  # type: ignore
+            persona_log,
+            "token",
+            nb_tokens,
+        )
         if nb_tokens > MAX_INPUTS_TOKENS:
             await close_thread(thread)
             return

@@ -9,6 +9,7 @@ from completion import generate_completion_response, process_response
 from constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
+    MAX_INPUTS_TOKENS,
 )
 from discord import Message as DiscordMessage
 from discord.ext import commands
@@ -21,6 +22,7 @@ from personas import (
 from utils import (
     allowed_thread,
     close_thread,
+    count_token_message,
     generate_initial_system,
     logger,
     remove_last_bot_message,
@@ -203,6 +205,20 @@ async def rerun(int: discord.Interaction) -> None:
         log_persona,
         "message",
     )
+
+    nb_tokens = count_token_message(channel_messages, MODEL)
+    send_to_log_channel(
+        client,
+        int.guild.id,  # type: ignore
+        thread.name,
+        int.author.global_name,  # type: ignore
+        log_persona,
+        "token",
+        nb_tokens,
+    )
+    if nb_tokens > MAX_INPUTS_TOKENS:
+        await close_thread(thread)
+        return
     try:
         async with thread.typing():
             response_data = await generate_completion_response(
