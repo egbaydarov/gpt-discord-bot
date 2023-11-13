@@ -103,6 +103,11 @@ async def help_command(
         description=persona_system.system,
         color=discord.Colour.from_str(persona_system.color),
     )
+    embed.add_field(
+        name="Model",
+        value=f"{persona_system.model}",
+        inline=False,
+    )
     await int.response.send_message(embed=embed)
 
 
