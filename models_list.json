@@ -1,0 +1,30 @@
+[{
+	"name" : "gpt-3.5-turbo",
+	"knowledge_cutoff" : "2021-09",
+	"max_input_token" : 4096
+},
+{
+	"name" : "gpt-3.5-turbo-1106",
+	"knowledge_cutoff" : "2021-09",
+	"max_input_token" : 16385
+}, {
+	"name" : "gpt-3.5-turbo-16k",
+	"knowledge_cutoff" : "2021-09",
+	"max_input_token" : 16385
+},
+{
+	"name" : "gpt-4-1106-preview",
+	"knowledge_cutoff" : "2023-04",
+	"max_input_token" : 128000
+},
+{
+	"name" : "gpt-4",
+	"knowledge_cutoff" : "2022-01",
+	"max_input_token" : 8192
+},
+{
+	"name" : "gpt-4-32k",
+	"knowledge_cutoff" : "2022-01",
+	"max_input_token" : 32768
+}
+]

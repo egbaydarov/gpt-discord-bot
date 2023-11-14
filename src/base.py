@@ -59,6 +59,21 @@ class ChannelLogs:
         return result
 
 
+@dataclass(frozen=True)
+class OpenAIModel:
+    name: str
+    knowledge_cutoff: str
+    max_input_token: str
+
+    def render(self):  # noqa
+        result = {
+            "name": self.name,
+            "knowledge_cutoff": self.knowledge_cutoff,
+            "max_input_token": self.max_input_token,
+        }
+        return result
+
+
 InteractionChannel = Union[
     VoiceChannel,
     StageChannel,
