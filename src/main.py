@@ -41,7 +41,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = discord.app_commands.CommandTree(client)
 bot = commands.Bot(command_prefix="!", intents=intents)
-MODEL = tiktoken.encoding_for_model(
+TOKEN_ENCODING = tiktoken.encoding_for_model(
     "gpt-4"
 )  # need to be upgraded to the new gpt-4 turbo but can do the job for now
 personas_choice = generate_choice_persona()
@@ -89,7 +89,7 @@ async def chat_command(
 # calls for each message
 @client.event
 async def on_message(message: DiscordMessage) -> None:  # noqa
-    await messages(message, client, MODEL)
+    await messages(message, client, TOKEN_ENCODING)
 
 
 @tree.command(name="help", description="Print each persona and their description")
@@ -204,7 +204,7 @@ async def rerun(int: discord.Interaction) -> None:
     log_persona = get_persona_by_emoji(thread)
     model_usage = get_models_completion(thread, log_persona)
     log_persona = update_persona_models(log_persona, model_usage)
-    nb_tokens = count_token_message(channel_messages, MODEL)
+    nb_tokens = count_token_message(channel_messages, TOKEN_ENCODING)
 
     await send_to_log_channel(
         client,

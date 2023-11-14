@@ -16,11 +16,16 @@ This bot uses the [OpenAI Python Library](https://github.com/openai/openai-pytho
 
 ## Commands
 
-- `/chat [message] (persona)` : Open a new chat.
+- `/chat [message] (persona) (model)` : Open a new chat.
   - Each persona have their proper emoji (icon) and the context is recognized by the thread name, where the second emoji is the icon. Don't change it manually!
+  - See [Persona format](#persona-format) for more information.
+  - You can also choose the model used for the chat. By default, it will use the model set in the configuration file, or the model set in the persona. The order are (in importance) choosen model -> Persona model (if any) -> default model (from configuration).
+- `/close` : Close the thread.
+- `/rerun` : Rerun the last message.
 - `/help <persona>` : Give instruction for the persona
 - `/change <persona>` : Change the persona used in the thread.
   - For this command, it will need the second emoji in the thread name to recognize the old persona and change it to the new persona.
+- `/chat_multiple` : Allow to send a more than 2000/4000 characters message. You can set the first message end complete until you use `$end` (`$done`, `$fin` works too). Use `$cancel` to cancel the command.
 
 # Setup
 ## Before creating the bot
