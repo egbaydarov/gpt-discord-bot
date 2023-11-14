@@ -9,7 +9,7 @@ from personas import get_persona
 
 
 def open_model() -> list[OpenAIModel]:
-    model_file = Path("models_list.json")
+    model_file = Path("openai_models.json")
     data_models = json.load(model_file.open(encoding="utf-8"))
     models = []
     for model in data_models:

@@ -19,7 +19,7 @@ This bot uses the [OpenAI Python Library](https://github.com/openai/openai-pytho
 - `/chat [message] (persona) (model)` : Open a new chat.
   - Each persona have their proper emoji (icon) and the context is recognized by the thread name, where the second emoji is the icon. Don't change it manually!
   - See [Persona format](#persona-format) for more information.
-  - You can also choose the model used for the chat. By default, it will use the model set in the configuration file, or the model set in the persona. The order are (in importance) choosen model -> Persona model (if any) -> default model (from configuration).
+  - You can also choose the model used for the chat. By default, it will use the model set in the configuration file, or the model set in the persona. The order are (in importance) choosen model -> Persona model (if any) -> default model (from configuration). Models are created in [`opain_models.json`](openai_models.json), and will be updated when OpenAI will release new models.
 - `/close` : Close the thread.
 - `/rerun` : Rerun the last message.
 - `/help <persona>` : Give instruction for the persona
