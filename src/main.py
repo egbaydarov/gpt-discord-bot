@@ -267,7 +267,7 @@ async def chat_multiple(
         messages = []
         channel = cast(discord.TextChannel, int.channel)
         await channel.send(
-            "Starting chat, please send your message in the next 60 seconds",
+            "Starting chat, please send your message in the next 60 seconds.\nUse `$end`, `$done` or `$stop` to end the chat. Use `$cancel` to cancel the chat\nUse `$cancel` to cancel the command.",
             delete_after=30,
         )
 
