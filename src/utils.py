@@ -6,13 +6,21 @@ from typing import Any, List, Literal, Optional
 
 import discord
 import tiktoken
-from base import ChannelLogs, InteractionChannel, Message, MessageableChannel, Persona
+from base import (
+    ChannelLogs,
+    InteractionChannel,
+    Message,
+    MessageableChannel,
+    OpenAIModel,
+    Persona,
+)
 from constants import (
     ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER,
     ALLOWED_SERVER_IDS,
     INACTIVATE_THREAD_PREFIX,
     MAX_CHARS_PER_REPLY_MSG,
+    OPENAI_DEFAULT_MODEL,
 )
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
@@ -203,6 +211,7 @@ async def send_to_log_channel(  # noqa
     thread_name: str,
     user: str,
     persona: Persona | None,
+    openai_model: OpenAIModel | None,
     type: Literal["message", "created", "changed", "closed"],
     token: Optional[int] = None,
 ) -> None:
@@ -241,9 +250,13 @@ async def send_to_log_channel(  # noqa
             **{message}**
             - __Thread name__: `{thread_name}`
             - __User__: `{user}`
+            - __Model__: `{OPENAI_DEFAULT_MODEL}`
             """
             if persona:
-                message += f"- __Persona__: `{persona.title}`"
+                message += f"\n- __Persona__: `{persona.title}`"
+                message = message.replace(OPENAI_DEFAULT_MODEL, persona.model)
+            if openai_model:
+                message = message.replace(OPENAI_DEFAULT_MODEL, openai_model.name)
             await log_channel.send(textwrap.dedent(message))
     except Exception as e:
         logger.exception(e)

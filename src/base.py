@@ -63,7 +63,7 @@ class ChannelLogs:
 class OpenAIModel:
     name: str
     knowledge_cutoff: str
-    max_input_token: str
+    max_input_token: int
 
     def render(self):  # noqa
         result = {

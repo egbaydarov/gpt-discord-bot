@@ -4,7 +4,7 @@ from pathlib import Path
 
 import discord
 import yaml
-from base import Persona
+from base import OpenAIModel, Persona
 from constants import KNOWLEDGE_CUTOFF, OPENAI_DEFAULT_MODEL, SYSTEM_MESSAGE
 from discord import Thread
 
@@ -40,16 +40,28 @@ def get_persona(persona: str | None) -> Persona:
                 title=get_persona.get("name", ""),
                 model=get_persona.get("model", OPENAI_DEFAULT_MODEL),
             )
-    current_date = datetime.now().strftime("%Y-%m-%d")
     return Persona(
         name="GPT-4",
         icon="🤖",
-        system=SYSTEM_MESSAGE.format(
-            knowledge_cutoff=KNOWLEDGE_CUTOFF, current_date=current_date
-        ),
+        system=SYSTEM_MESSAGE,
         title="GPT-4",
         color="#000000",
         model=OPENAI_DEFAULT_MODEL,
+    )
+
+
+def update_persona_models(persona: Persona, model: OpenAIModel) -> Persona:
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    return Persona(
+        name=persona.name,
+        icon=persona.icon,
+        system=persona.system.format(
+            knowledge_cutoff=model.knowledge_cutoff,
+            current_date=current_date,
+        ),
+        color=persona.color,
+        title=persona.title,
+        model=model.name,
     )
 
 

@@ -9,15 +9,16 @@ from completion import generate_completion_response, process_response
 from constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
-    MAX_INPUTS_TOKENS,
 )
 from discord import Message as DiscordMessage
 from discord.ext import commands
+from parse_model import generate_choice_model, get_models_completion
 from personas import (
     generate_choice_persona,
     get_all_icons,
     get_persona,
     get_persona_by_emoji,
+    update_persona_models,
 )
 from utils import (
     allowed_thread,
@@ -44,6 +45,7 @@ MODEL = tiktoken.encoding_for_model(
     "gpt-4"
 )  # need to be upgraded to the new gpt-4 turbo but can do the job for now
 personas_choice = generate_choice_persona()
+models_choice = generate_choice_model()
 
 
 class Client(discord.Client):
@@ -67,7 +69,9 @@ async def on_ready() -> None:
 @discord.app_commands.describe(
     persona="The persona to use with the model, changing this response style"
 )
+@discord.app_commands.describe(models="The model to use for the response")
 @discord.app_commands.choices(persona=personas_choice)
+@discord.app_commands.choices(models=models_choice)
 @discord.app_commands.checks.has_permissions(send_messages=True)
 @discord.app_commands.checks.has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(send_messages=True)
@@ -77,8 +81,9 @@ async def chat_command(
     int: discord.Interaction,
     message: str,
     persona: Optional[discord.app_commands.Choice[str]] = None,
+    models: Optional[discord.app_commands.Choice[str]] = None,
 ) -> None:
-    await chat(client, int, message, persona)
+    await chat(client, int, message, persona, model=models)
 
 
 # calls for each message
@@ -145,6 +150,7 @@ async def change_persona(
             thread.name,
             int.user.global_name,  # type: ignore
             persona_system,
+            None,
             "changed",
         )
         await int.response.send_message(
@@ -196,6 +202,8 @@ async def rerun(int: discord.Interaction) -> None:
     thread = cast(discord.Thread, int.channel)
     channel_messages = await generate_initial_system(client, thread)
     log_persona = get_persona_by_emoji(thread)
+    model_usage = get_models_completion(thread, log_persona)
+    log_persona = update_persona_models(log_persona, model_usage)
     nb_tokens = count_token_message(channel_messages, MODEL)
 
     await send_to_log_channel(
@@ -204,10 +212,11 @@ async def rerun(int: discord.Interaction) -> None:
         thread.name,
         int.user.global_name,  # type: ignore
         log_persona,
+        model_usage,
         "message",
         token=nb_tokens,
     )
-    if nb_tokens > MAX_INPUTS_TOKENS:
+    if nb_tokens > model_usage.max_input_token:
         await close_thread(thread)
         return
 
@@ -215,7 +224,7 @@ async def rerun(int: discord.Interaction) -> None:
         async with thread.typing():
             response_data = await generate_completion_response(
                 messages=remove_last_bot_message(channel_messages[:-1]),
-                model=log_persona.model,
+                model=model_usage.name,
             )
             await process_response(thread=thread, response_data=response_data)
     except Exception as e:
@@ -232,7 +241,9 @@ async def rerun(int: discord.Interaction) -> None:
 @discord.app_commands.describe(
     persona="The persona to use with the model, changing this response style"
 )
+@discord.app_commands.describe(model="The model to use for the response")
 @discord.app_commands.choices(persona=personas_choice)
+@discord.app_commands.choices(model=models_choice)
 @discord.app_commands.checks.has_permissions(send_messages=True)
 @discord.app_commands.checks.has_permissions(view_channel=True)
 @discord.app_commands.checks.bot_has_permissions(send_messages=True)
@@ -242,6 +253,7 @@ async def chat_multiple(
     int: discord.Interaction,
     first_message: str,
     persona: Optional[discord.app_commands.Choice[str]] = None,
+    model: Optional[discord.app_commands.Choice[str]] = None,
 ) -> None:
     try:
         # only support creating thread in text channel
@@ -285,7 +297,7 @@ async def chat_multiple(
             return
 
         message = first_message + "\n" + "\n".join(messages)
-        await chat(client, int, message, persona, follow_up=None)
+        await chat(client, int, message, persona, follow_up=None, model=model)
 
     except Exception as e:
         logger.error(e)

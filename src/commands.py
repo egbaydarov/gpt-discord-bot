@@ -7,11 +7,11 @@ from base import Message
 from completion import generate_completion_response, parse_thread_name, process_response
 from constants import (
     ACTIVATE_THREAD_PREFX,
-    MAX_INPUTS_TOKENS,
     SECONDS_DELAY_RECEIVING_MSG,
 )
 from discord import Message as DiscordMessage
-from personas import get_persona, get_persona_by_emoji
+from parse_model import create_model_commands, get_models_completion
+from personas import get_persona, get_persona_by_emoji, update_persona_models
 from tiktoken import Encoding
 from utils import (
     allowed_thread,
@@ -26,12 +26,13 @@ from utils import (
 logger = logging.getLogger(__name__)
 
 
-async def chat(
+async def chat(  # noqa
     client: discord.Client,
     int: discord.Interaction,
     message: str,
     persona: Optional[discord.app_commands.Choice[str]] = None,
     follow_up: Optional[discord.WebhookMessage] = None,
+    model: Optional[discord.app_commands.Choice[str]] = None,
 ) -> None:
     try:
         # only support creating thread in text channel
@@ -42,15 +43,18 @@ async def chat(
             await int.response.defer(thinking=True)
             follow_up = await int.followup.send("Creating thread...", wait=True)
         user = int.user
-        try:
-            persona_system = get_persona(persona.value if persona else None)
 
+        try:
+            models_to_use = create_model_commands(model, persona)
+            persona_system = get_persona(persona.value if persona else None)
+            persona_system = update_persona_models(persona_system, models_to_use)
             embed = discord.Embed(
                 title=f"{persona_system.icon} {persona_system.title}",
                 description=f"<@{user.id}> started a new chat",
                 color=discord.Color.from_str(persona_system.color),
             )
             embed.add_field(name="Message :", value=f">>> {message}")
+            embed.set_footer(text=f"Model: {models_to_use.name}")
 
             await follow_up.edit(content="", embed=embed)
         except Exception as e:
@@ -81,6 +85,7 @@ async def chat(
                 thread.name,
                 user.global_name,  # type: ignore
                 persona_system,
+                models_to_use,
                 "created",
             )
             # fetch completion
@@ -90,7 +95,7 @@ async def chat(
             ]
             response_data = await generate_completion_response(
                 messages=messages,
-                model=persona_system.model,
+                model=models_to_use.name,
             )
             await process_response(thread=thread, response_data=response_data)
 
@@ -118,6 +123,8 @@ async def messages(
         thread = cast(discord.Thread, message.channel)
         channel_messages = await generate_initial_system(client, thread)
         persona_log = get_persona_by_emoji(thread)
+        models_completion = get_models_completion(thread, persona_log)
+        persona_log = update_persona_models(persona_log, models_completion)
         nb_tokens: int = count_token_message(channel_messages, model)
 
         await send_to_log_channel(
@@ -126,11 +133,12 @@ async def messages(
             thread.name,
             message.author.global_name,  # type: ignore
             persona_log,
+            models_completion,
             "message",
             token=nb_tokens,
         )
 
-        if nb_tokens > MAX_INPUTS_TOKENS:
+        if nb_tokens > models_completion.max_input_token:
             await close_thread(thread)
             return
 
@@ -152,7 +160,7 @@ async def messages(
         async with thread.typing():
             response_data = await generate_completion_response(
                 messages=channel_messages,
-                model=persona_log.model,
+                model=models_completion.name,
             )
 
         if is_last_message_stale(
