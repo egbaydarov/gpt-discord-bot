@@ -109,7 +109,7 @@ async def resume_message(
     try:
         system_message = Message(
             user="system",
-            text="Resume the message in 1 to 3 words please, with keeping the language used by the user.",
+            text="Resume the message in 1 to 2 words please, with keeping the language used by the user. Don't add any point, comma, or quotes. It must be a short sentence to create a thread.",
         )
         messages = [system_message, message]
         response_data = await generate_completion_response(
