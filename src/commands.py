@@ -55,7 +55,7 @@ async def chat(  # noqa
                 color=discord.Color.from_str(persona_system.color),
             )
             # cut text if > 1024
-            message_cut = textwrap.shorten(message, width=1024, placeholder="...")
+            message_cut = textwrap.shorten(message, width=1020)
             embed.add_field(name="Message :", value=f">>> {message_cut}")
             embed.set_footer(text=f"Model: {models_to_use.name}")
 
