@@ -106,55 +106,68 @@ async def process_response(
 async def resume_message(
     message: Message, followup: discord.WebhookMessage
 ) -> str | None:
-    system_message = Message(
-        user="system",
-        text="Resume the message in 1 to 3 words please, with keeping the language used by the user.",
-    )
-    messages = [system_message, message]
-    response_data = await generate_completion_response(messages, model="gpt-3.5-turbo")
-    status = response_data.status
-    reply_text = response_data.reply_text
-    status_text = response_data.status_text
-    if status is CompletionResult.OK:
-        if not reply_text:
-            await followup.edit(
-                content="",
-                embed=discord.Embed(
-                    description="**Invalid response** - empty response",
-                    color=discord.Color.yellow(),
-                ),
-            )
-            return None
-        elif len(reply_text) > MAX_CHARS_PER_REPLY_MSG:
-            await followup.edit(
-                content="",
-                embed=discord.Embed(
-                    description="**Invalid response** - too long",
-                    color=discord.Color.yellow(),
-                ),
-            )
-            return None
-        else:
-            return reply_text.replace(".", "")
+    try:
+        system_message = Message(
+            user="system",
+            text="Resume the message in 1 to 3 words please, with keeping the language used by the user.",
+        )
+        messages = [system_message, message]
+        response_data = await generate_completion_response(
+            messages, model="gpt-3.5-turbo"
+        )
+        status = response_data.status
+        reply_text = response_data.reply_text
+        status_text = response_data.status_text
+        if status is CompletionResult.OK:
+            if not reply_text:
+                await followup.edit(
+                    content="",
+                    embed=discord.Embed(
+                        description="**Invalid response** - empty response",
+                        color=discord.Color.yellow(),
+                    ),
+                )
+                return ""
+            elif len(reply_text) > MAX_CHARS_PER_REPLY_MSG:
+                await followup.edit(
+                    content="",
+                    embed=discord.Embed(
+                        description="**Invalid response** - too long",
+                        color=discord.Color.yellow(),
+                    ),
+                )
+                return ""
+            else:
+                return reply_text.replace(".", "")
 
-    elif status is CompletionResult.TOO_LONG:
+        elif status is CompletionResult.TOO_LONG:
+            await followup.edit(
+                content="",
+                embed=discord.Embed(
+                    description=f"**Error** - {status_text}",
+                    color=discord.Color.yellow(),
+                ),
+            )
+            return ""
+        else:
+            await followup.edit(
+                content="",
+                embed=discord.Embed(
+                    description=f"**Error** - {status_text}",
+                    color=discord.Color.yellow(),
+                ),
+            )
+            return ""
+    except Exception as e:
+        logger.exception(e)
         await followup.edit(
             content="",
             embed=discord.Embed(
-                description=f"**Error** - {status_text}",
+                description=f"**Error** - {str(e)}",
                 color=discord.Color.yellow(),
             ),
         )
-        return None
-    else:
-        await followup.edit(
-            content="",
-            embed=discord.Embed(
-                description=f"**Error** - {status_text}",
-                color=discord.Color.yellow(),
-            ),
-        )
-        return None
+        return ""
 
 
 async def parse_thread_name(
