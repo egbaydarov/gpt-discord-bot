@@ -138,7 +138,7 @@ async def resume_message(
                 )
                 return ""
             else:
-                return reply_text.replace(".", "")
+                return reply_text.replace(".", "").replace('"', "")
 
         elif status is CompletionResult.TOO_LONG:
             await followup.edit(
