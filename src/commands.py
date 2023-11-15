@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import textwrap
 from typing import Optional, cast
 
 import discord
@@ -53,7 +54,9 @@ async def chat(  # noqa
                 description=f"<@{user.id}> started a new chat",
                 color=discord.Color.from_str(persona_system.color),
             )
-            embed.add_field(name="Message :", value=f">>> {message}")
+            # cut text if > 1024
+            message_cut = textwrap.shorten(message, width=1024, placeholder="...")
+            embed.add_field(name="Message :", value=f">>> {message_cut}")
             embed.set_footer(text=f"Model: {models_to_use.name}")
 
             await follow_up.edit(content="", embed=embed)
