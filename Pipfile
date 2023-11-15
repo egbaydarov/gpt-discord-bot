@@ -20,5 +20,5 @@ python_version = "3.11"
 [scripts]
 start = "python src/main.py"
 pm = "pm2 start \"pipenv run start\" --name owlly"
-restart = "pm2 restart owlly"
+restart = "pm2 delete owlly && pipenv run pm"
 dev = "nodemon --exec \"python src/main.py\" --watch src --ext py"
