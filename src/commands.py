@@ -13,6 +13,7 @@ from constants import (
 from discord import Message as DiscordMessage
 from parse_model import create_model_commands, get_models_completion
 from personas import get_persona, get_persona_by_emoji, update_persona_models
+from system_message import create_system_message, get_system_message
 from tiktoken import Encoding
 from utils import (
     allowed_thread,
@@ -34,6 +35,7 @@ async def chat(  # noqa
     persona: Optional[discord.app_commands.Choice[str]] = None,
     follow_up: Optional[discord.WebhookMessage] = None,
     model: Optional[discord.app_commands.Choice[str]] = None,
+    system_message: Optional[str] = None,
 ) -> None:
     try:
         # only support creating thread in text channel
@@ -49,6 +51,7 @@ async def chat(  # noqa
             models_to_use = create_model_commands(model, persona)
             persona_system = get_persona(persona.value if persona else None)
             persona_system = update_persona_models(persona_system, models_to_use)
+            persona_system = create_system_message(persona_system, system_message)
             embed = discord.Embed(
                 title=f"{persona_system.icon} {persona_system.title}",
                 description=f"<@{user.id}> started a new chat",
@@ -59,7 +62,10 @@ async def chat(  # noqa
             embed.add_field(name="Message :", value=f">>> {message_cut}")
             embed.set_footer(text=f"Model: {models_to_use.name}")
 
-            await follow_up.edit(content="", embed=embed)
+            await follow_up.edit(
+                content=f"**__System Message**__:\n> {persona_system.system}",
+                embed=embed,
+            )
         except Exception as e:
             logger.exception(e)
             await follow_up.edit(content=f"Failed to start chat {str(e)}")
@@ -124,10 +130,12 @@ async def messages(
             return
 
         thread = cast(discord.Thread, message.channel)
-        channel_messages = await generate_initial_system(client, thread)
         persona_log = get_persona_by_emoji(thread)
         models_completion = get_models_completion(thread, persona_log)
         persona_log = update_persona_models(persona_log, models_completion)
+        persona_log = get_system_message(thread, persona_log)
+        channel_messages = await generate_initial_system(client, thread, persona_log)
+
         nb_tokens: int = count_token_message(channel_messages, model)
 
         await send_to_log_channel(

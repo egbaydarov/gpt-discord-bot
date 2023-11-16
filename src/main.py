@@ -70,6 +70,7 @@ async def on_ready() -> None:
     persona="The persona to use with the model, changing this response style"
 )
 @discord.app_commands.describe(models="The model to use for the response")
+@discord.app_commands.describe(system_message="The system message to use")
 @discord.app_commands.choices(persona=personas_choice)
 @discord.app_commands.choices(models=models_choice)
 @discord.app_commands.checks.has_permissions(send_messages=True)
@@ -82,8 +83,11 @@ async def chat_command(
     message: str,
     persona: Optional[discord.app_commands.Choice[str]] = None,
     models: Optional[discord.app_commands.Choice[str]] = None,
+    system_message: Optional[str] = None,
 ) -> None:
-    await chat(client, int, message, persona, model=models)
+    await chat(
+        client, int, message, persona, model=models, system_message=system_message
+    )
 
 
 # calls for each message
@@ -182,6 +186,7 @@ async def stop(int: discord.Interaction) -> None:
         client,
         int.guild.id,  # type: ignore
         thread.name,
+        openai_model=None,
         user=int.user.global_name,  # type: ignore
         persona=None,
         type="closed",
@@ -200,10 +205,11 @@ async def rerun(int: discord.Interaction) -> None:
     await int.response.defer()
     follow_up = await int.followup.send("Rerunning...", wait=True, ephemeral=True)
     thread = cast(discord.Thread, int.channel)
-    channel_messages = await generate_initial_system(client, thread)
     log_persona = get_persona_by_emoji(thread)
     model_usage = get_models_completion(thread, log_persona)
     log_persona = update_persona_models(log_persona, model_usage)
+    channel_messages = await generate_initial_system(client, thread, log_persona)
+
     nb_tokens = count_token_message(channel_messages, TOKEN_ENCODING)
 
     await send_to_log_channel(

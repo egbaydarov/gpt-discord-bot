@@ -25,7 +25,6 @@ from constants import (
 from discord import Client, ClientUser, Thread
 from discord import Message as DiscordMessage
 from discord.ext.commands import Bot
-from personas import get_persona_by_emoji
 
 logger = logging.getLogger(__name__)
 
@@ -159,14 +158,12 @@ def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> i
     return token
 
 
-async def generate_initial_system(client: Client, thread: Thread) -> list[Message]:
+async def generate_initial_system(
+    client: Client, thread: Thread, persona: Persona
+) -> list[Message]:
     system_message = (
-        get_persona_by_emoji(thread)
-        .system.replace("\n-", " ")
-        .replace("\n", " ")
-        .replace("__", "")
-    )  # type: ignore
-
+        persona.system.replace("\n-", " ").replace("\n", " ").replace("__", "")
+    )  # remove newlines
     user = typing.cast(ClientUser, client.user)
     channel_messages = [
         discord_message_to_message(message=message, bot_name=user.name)
