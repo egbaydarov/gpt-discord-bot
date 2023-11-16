@@ -63,7 +63,7 @@ async def chat(  # noqa
             embed.set_footer(text=f"Model: {models_to_use.name}")
 
             await follow_up.edit(
-                content=f"**__System Message**__:\n> {persona_system.system}",
+                content=f"**__System Message__**:\n> {persona_system.system}",
                 embed=embed,
             )
         except Exception as e:

@@ -8,13 +8,13 @@ def get_system_message(thread: discord.Thread, persona: Persona) -> Persona:
     first_message = thread.starter_message
     if first_message:
         content = first_message.content
-        if "**__System Message**__:\n>" in content:
+        if "**__System Message__**:\n>" in content:
             return Persona(
                 name=persona.name,
                 title=persona.title,
                 icon=persona.icon,
                 color=persona.color,
-                system=content.replace("**__System Message**__:\n> ", ""),
+                system=content.replace("**__System Message__**:\n> ", ""),
                 model=persona.model,
             )
     return persona
