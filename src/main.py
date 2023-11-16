@@ -70,7 +70,9 @@ async def on_ready() -> None:
     persona="The persona to use with the model, changing this response style"
 )
 @discord.app_commands.describe(models="The model to use for the response")
-@discord.app_commands.describe(system_message="The system message to use")
+@discord.app_commands.describe(
+    system_message="The system message to use (override persona if any)"
+)
 @discord.app_commands.choices(persona=personas_choice)
 @discord.app_commands.choices(models=models_choice)
 @discord.app_commands.checks.has_permissions(send_messages=True)
@@ -248,6 +250,9 @@ async def rerun(int: discord.Interaction) -> None:
     persona="The persona to use with the model, changing this response style"
 )
 @discord.app_commands.describe(model="The model to use for the response")
+@discord.app_commands.describe(
+    system_message="The system message to use (override persona if any)"
+)
 @discord.app_commands.choices(persona=personas_choice)
 @discord.app_commands.choices(model=models_choice)
 @discord.app_commands.checks.has_permissions(send_messages=True)
@@ -260,6 +265,7 @@ async def chat_multiple(
     first_message: str,
     persona: Optional[discord.app_commands.Choice[str]] = None,
     model: Optional[discord.app_commands.Choice[str]] = None,
+    system_message: Optional[str] = None,
 ) -> None:
     try:
         # only support creating thread in text channel
@@ -303,7 +309,15 @@ async def chat_multiple(
             return
 
         message = first_message + "\n" + "\n".join(messages)
-        await chat(client, int, message, persona, follow_up=None, model=model)
+        await chat(
+            client,
+            int,
+            message,
+            persona,
+            follow_up=None,
+            model=model,
+            system_message=system_message,
+        )
 
     except Exception as e:
         logger.error(e)
