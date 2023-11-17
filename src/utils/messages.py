@@ -4,10 +4,9 @@ from typing import Any, Optional, cast
 import discord
 import tiktoken
 from base import Message, Persona, Thread
+from constants import MAX_CHARS_PER_REPLY_MSG
 from discord import Client, ClientUser
 from discord import Message as DiscordMessage
-
-from src.constants import MAX_CHARS_PER_REPLY_MSG
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,6 @@ from discord.ext import commands
 from main import (
     TOKEN_ENCODING,
     client,
-    close_thread,
     models_choice,
     personas_choice,
 )
@@ -21,14 +20,14 @@ from utils.messages import (
 )
 from utils.parse_model import get_models_completion
 from utils.personas import get_persona_by_emoji, update_persona_models
-from utils.threads import allowed_thread, should_block
+from utils.threads import allowed_thread, close_thread, should_block
 from utils.utils import send_to_log_channel
 
 logger = logging.getLogger(__name__)
 
 
 class Communicate(commands.Cog):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:  # noqa
         self.bot = bot
 
     @app_commands.command(name="start", description="Start a chat thread")
@@ -47,7 +46,7 @@ class Communicate(commands.Cog):
     @discord.app_commands.checks.bot_has_permissions(view_channel=True)
     @discord.app_commands.checks.bot_has_permissions(manage_threads=True)
     async def chat_command(  # noqa
-        self,
+        self,  # noqa
         int: discord.Interaction,
         message: str,
         persona: Optional[discord.app_commands.Choice[str]] = None,
@@ -59,7 +58,7 @@ class Communicate(commands.Cog):
         )
 
     @app_commands.command(name="rerun", description="Rerun the last message")
-    async def rerun(self, int: discord.Interaction) -> None:
+    async def rerun(self, int: discord.Interaction) -> None:  # noqa
         if not allowed_thread(client, int.channel, int.guild, int.user):
             await int.response.send_message(
                 "This command can only be used in a thread created by the bot",
@@ -122,7 +121,7 @@ class Communicate(commands.Cog):
     @discord.app_commands.checks.bot_has_permissions(view_channel=True)
     @discord.app_commands.checks.bot_has_permissions(manage_threads=True)
     async def chat_multiple(  # noqa
-        self,
+        self,  # noqa
         int: discord.Interaction,
         first_message: str,
         persona: Optional[discord.app_commands.Choice[str]] = None,

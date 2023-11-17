@@ -5,29 +5,29 @@ from typing import Optional, cast
 
 import discord
 from base import Message
-from completion import (
-    generate_completion_response,
-    parse_thread_name,
-    process_response,
-)
 from constants import (
     ACTIVATE_THREAD_PREFX,
     SECONDS_DELAY_RECEIVING_MSG,
 )
 from discord import Message as DiscordMessage
-from parse_model import create_model_commands, get_models_completion
-from personas import (
+from tiktoken import Encoding
+from utils.completion import (
+    generate_completion_response,
+    parse_thread_name,
+    process_response,
+)
+from utils.messages import (
+    count_token_message,
+    generate_initial_system,
+    is_last_message_stale,
+)
+from utils.parse_model import create_model_commands, get_models_completion
+from utils.personas import (
     create_system_message,
     get_persona,
     get_persona_by_emoji,
     get_system_message,
     update_persona_models,
-)
-from tiktoken import Encoding
-from utils.messages import (
-    count_token_message,
-    generate_initial_system,
-    is_last_message_stale,
 )
 from utils.threads import allowed_thread, close_thread, should_block
 from utils.utils import send_to_log_channel
