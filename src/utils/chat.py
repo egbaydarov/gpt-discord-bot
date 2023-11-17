@@ -143,7 +143,7 @@ async def chat_bot(
 
         thread = cast(discord.Thread, message.channel)
         persona_log = get_persona_by_emoji(thread)
-        models_completion = get_models_completion(thread, persona_log)
+        models_completion = await get_models_completion(thread, persona_log)
         persona_log = update_persona_models(persona_log, models_completion)
         persona_log = get_system_message(thread, persona_log)
         channel_messages = await generate_initial_system(client, thread, persona_log)

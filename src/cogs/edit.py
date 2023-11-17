@@ -14,7 +14,11 @@ from discord import app_commands
 from discord.ext import commands
 from main import client, models_choice, personas_choice
 from rich.console import Console
-from utils.parse_model import create_model_commands, edit_embed, get_model_from_name
+from utils.parse_model import (
+    create_model_commands,
+    edit_embed,
+    get_model_from_name,
+)
 from utils.personas import (
     get_all_icons,
     get_persona,
@@ -143,8 +147,20 @@ class EditThread(commands.GroupCog, name="edit"):
 
         if not system:
             system = ""  # remove the system message and return to the original persona system message
+        else:
+            system = "**__System Message__**:\n> " + system
 
-        await edit_embed(thread, get_model_from_name(persona_system.model), system, int)
+        await edit_embed(thread, None, system, int)
+
+        await send_to_log_channel(
+            self.bot,
+            int.guild.id,  # type: ignore
+            thread.name,
+            int.user.global_name,  # type: ignore
+            persona_system,
+            None,
+            "changed",
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

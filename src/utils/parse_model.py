@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import discord
 from base import OpenAIModel, Persona
@@ -49,10 +49,20 @@ def get_model_from_name(model_name: str | None) -> OpenAIModel:
     )
 
 
-def get_models_completion(
+async def get_models_completion(
     thread: discord.Thread, persona: Persona | None
 ) -> OpenAIModel:
     first_thread_message = thread.starter_message
+    first_thread_message = thread.starter_message
+    if not first_thread_message:
+        try:
+            # get original channel linked to the thread
+            channel = cast(discord.TextChannel, thread.parent)
+            # get first message in the thread
+            first_thread_message = await channel.fetch_message(thread.id)
+        except Exception as e:
+            error.log(f"Failed to fetch message: {e}", log_locals=True)
+            return get_model_from_name(None)
     if first_thread_message:
         # get footer
         footer = first_thread_message.embeds[0].footer.text
@@ -80,23 +90,35 @@ def create_model_commands(
     )
 
 
-async def edit_embed(
+async def edit_embed(  # noqa
     thread: discord.Thread,
-    model: OpenAIModel,
+    model: OpenAIModel | None = None,
     message_system: Optional[str] = None,
     int: Optional[discord.Interaction] = None,
 ) -> None:
     first_thread_message = thread.starter_message
+    if not first_thread_message:
+        try:
+            # get original channel linked to the thread
+            channel = cast(discord.TextChannel, thread.parent)
+            # get first message in the thread
+            first_thread_message = await channel.fetch_message(thread.id)
+        except Exception as e:
+            error.log(f"Failed to fetch message: {e}", log_locals=True)
+            return
     if first_thread_message:
         # get footer
         footer = first_thread_message.embeds[0].footer.text
-        if footer:
-            # replace model after the "model: " text
-            old_model = footer.split("Model: ")[1]
-            new_model = model.name
-            new_footer = footer.replace(old_model, new_model)
+        if model:
+            if footer:
+                # replace model after the "model: " text
+                old_model = footer.split("Model: ")[1]
+                new_model = model.name
+                new_footer = footer.replace(old_model, new_model)
+            else:
+                new_footer = f"Model: {model.name}"
         else:
-            new_footer = f"Model: {model.name}"
+            new_footer = footer
         # edit first message
         await first_thread_message.edit(
             content=message_system if message_system else first_thread_message.content,
@@ -106,16 +128,25 @@ async def edit_embed(
                 color=first_thread_message.embeds[0].color,
             ).set_footer(text=new_footer),
         )
+        msg = ""
+        if model:
+            msg = f"- Changed model to {model.name}\n"
+        if message_system:
+            msg += f"\n- __System Message__:\n>>>{message_system.replace('__', '').replace('**', '')}"
         if int:
-            msg = f"Changed model to {model.name}"
-            if message_system:
-                msg += f"with:\n>>>{message_system}"
-            await int.response.send_message(
-                f"Changed model to {model.name}", ephemeral=True
-            )
+            await int.response.send_message(msg, ephemeral=True)
+        console.log(msg)
     else:
+        # GET FIRST MESSAGE with thread id
+
         if int:
-            await int.response.send_message(
-                f"Failed to change model to {model.name}", ephemeral=True
-            )
+            if model:
+                await int.response.send_message(
+                    f"Failed to change model to {model.name}", ephemeral=True
+                )
+            elif message_system:
+                await int.response.send_message(
+                    "Failed to change system message", ephemeral=True
+                )
+
         error.log("Failed to change model", log_locals=True)

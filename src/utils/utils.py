@@ -38,12 +38,10 @@ async def send_to_log_channel(  # noqa
         logs = ChannelLogs(logs["logs"]["channel_id"], logs["logs"]["event"])
         log_channel = client.get_channel(logs.channel_id)
         message = ""
-        console.log(f"logs.event - {logs.event.get('message', False)}")
         match type:
             case "message":
                 message = "New message received"
                 if not logs.event.get("message", False):
-                    console.log("logs.event.get('message', False) - True")
                     return
                 if token:
                     message += f"\n- __Token count__: {token}"

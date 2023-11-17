@@ -70,7 +70,7 @@ class Communicate(commands.Cog):
         follow_up = await int.followup.send("Rerunning...", wait=True, ephemeral=True)
         thread = cast(discord.Thread, int.channel)
         log_persona = get_persona_by_emoji(thread)
-        model_usage = get_models_completion(thread, log_persona)
+        model_usage = await get_models_completion(thread, log_persona)
         log_persona = update_persona_models(log_persona, model_usage)
         channel_messages = await generate_initial_system(client, thread, log_persona)
 
