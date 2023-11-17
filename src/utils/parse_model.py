@@ -5,7 +5,7 @@ from typing import Optional
 import discord
 from base import OpenAIModel, Persona
 from constants import KNOWLEDGE_CUTOFF, MAX_INPUTS_TOKENS, OPENAI_DEFAULT_MODEL
-from personas import get_persona
+from utils.personas import get_persona
 
 
 def open_model() -> list[OpenAIModel]:

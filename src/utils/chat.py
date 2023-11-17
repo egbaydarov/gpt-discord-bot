@@ -5,7 +5,11 @@ from typing import Optional, cast
 
 import discord
 from base import Message
-from completion import generate_completion_response, parse_thread_name, process_response
+from completion import (
+    generate_completion_response,
+    parse_thread_name,
+    process_response,
+)
 from constants import (
     ACTIVATE_THREAD_PREFX,
     SECONDS_DELAY_RECEIVING_MSG,

@@ -3,19 +3,20 @@ from typing import Optional, cast
 
 import discord
 import tiktoken
-from commands import chat_bot
+from src.utils.chat import chat_bot
 from constants import (
     BOT_INVITE_URL,
     DISCORD_BOT_TOKEN,
 )
 from discord import Message as DiscordMessage
 from discord.ext import commands
-from parse_model import generate_choice_model
-from personas import (
+from src.utils.parse_model import generate_choice_model
+from src.utils.personas import (
     generate_choice_persona,
     get_persona,
 )
-from utils import (
+
+from src.utils.utils import (
     allowed_thread,
     close_thread,
     logger,

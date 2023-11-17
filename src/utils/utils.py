@@ -8,17 +8,12 @@ import discord
 import tiktoken
 from base import (
     ChannelLogs,
-    InteractionChannel,
     Message,
-    MessageableChannel,
     OpenAIModel,
     Persona,
 )
 from constants import (
-    ACTIVATE_THREAD_PREFX,
     ALLOWED_SERVER,
-    ALLOWED_SERVER_IDS,
-    INACTIVATE_THREAD_PREFIX,
     MAX_CHARS_PER_REPLY_MSG,
     OPENAI_DEFAULT_MODEL,
 )
@@ -124,29 +119,6 @@ def is_last_message_stale(
     )
 
 
-async def close_thread(thread: discord.Thread) -> None:
-    await thread.edit(name=INACTIVATE_THREAD_PREFIX)
-    await thread.send(
-        embed=discord.Embed(
-            description="**Thread closed**...",
-            color=discord.Color.blue(),
-        )
-    )
-    await thread.edit(archived=True, locked=True)
-
-
-def should_block(guild: Optional[discord.Guild]) -> bool:
-    if guild is None:
-        # dm's not supported
-        logger.info("DM not supported")
-        return True
-    if guild.id and guild.id not in ALLOWED_SERVER_IDS:
-        # not allowed in this server
-        logger.info(f"Guild {guild} not allowed")
-        return True
-    return False
-
-
 def count_token_message(messages: list[Message], models: tiktoken.Encoding) -> int:
     """Count the number of tokens in a list of messages
     Use the tiktoken API to count the number of tokens in a message
@@ -173,33 +145,6 @@ async def generate_initial_system(
     channel_messages.append(Message(user="system", text=system_message))
     channel_messages.reverse()
     return channel_messages
-
-
-def allowed_thread(
-    client: Client,
-    thread: Optional[InteractionChannel | MessageableChannel] = None,
-    guild: Optional[discord.Guild] = None,
-    author: Optional[discord.User | discord.Member] = None,
-    need_last_message: bool = False,
-) -> bool:
-    if should_block(guild) or not client.user or not author or author.bot:
-        return False
-
-    # ignore messages not in a thread
-    if not isinstance(thread, discord.Thread):
-        return False
-
-    if (
-        not thread
-        or (need_last_message and not thread.last_message)
-        or thread.owner_id != client.user.id
-        or thread.archived
-        or thread.locked
-        or not thread.name.startswith(ACTIVATE_THREAD_PREFX)
-    ):
-        # ignore this thread
-        return False
-    return True
 
 
 async def send_to_log_channel(  # noqa

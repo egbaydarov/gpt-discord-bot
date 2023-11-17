@@ -16,7 +16,8 @@ from constants import (
     THREAD_NAME,
     TIME_FORMAT,
 )
-from utils import close_thread, logger, split_into_shorter_messages
+
+from src.utils.utils import close_thread, logger, split_into_shorter_messages
 
 
 class CompletionResult(Enum):

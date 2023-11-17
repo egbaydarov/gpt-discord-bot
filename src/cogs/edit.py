@@ -13,14 +13,14 @@ from typing import Optional, cast
 import discord
 from discord import app_commands
 from discord.ext import commands
-from main import client, personas_choice
-from personas import get_all_icons, get_persona
-from utils import allowed_thread, send_to_log_channel
+from main import client, personas_choice, models_choice
+from src.utils.personas import get_all_icons, get_persona
+from utils.utils import allowed_thread, send_to_log_channel
 
 logger = logging.getLogger(__name__)
 
 
-class ChangePersona(commands.GroupCog, name="edit"):
+class EditThread(commands.GroupCog, name="edit"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         super().__init__()
@@ -70,7 +70,11 @@ class ChangePersona(commands.GroupCog, name="edit"):
                 f"Failed to change persona to {persona_system.title}",
                 ephemeral=True,
             )
+    @app_commands.command(name="model")
+    @discord.app_commands.describe(model="The model to change to")
+    @discord.app_commands.choices(model=models_choice)
+    @discord.app_commands.guild_only()
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(ChangePersona(bot))
+    await bot.add_cog(EditThread(bot))
