@@ -1,4 +1,5 @@
 import io
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -16,8 +17,10 @@ from constants import (
     THREAD_NAME,
     TIME_FORMAT,
 )
+from utils.messages import split_into_shorter_messages
+from utils.threads import close_thread
 
-from src.utils.utils import close_thread, logger, split_into_shorter_messages
+logger = logging.getLogger(__name__)
 
 
 class CompletionResult(Enum):

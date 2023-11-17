@@ -16,18 +16,21 @@ from constants import (
 )
 from discord import Message as DiscordMessage
 from parse_model import create_model_commands, get_models_completion
-from personas import get_persona, get_persona_by_emoji, update_persona_models
-from system_message import create_system_message, get_system_message
+from personas import (
+    create_system_message,
+    get_persona,
+    get_persona_by_emoji,
+    get_system_message,
+    update_persona_models,
+)
 from tiktoken import Encoding
-from utils import (
-    allowed_thread,
-    close_thread,
+from utils.messages import (
     count_token_message,
     generate_initial_system,
     is_last_message_stale,
-    send_to_log_channel,
-    should_block,
 )
+from utils.threads import allowed_thread, close_thread, should_block
+from utils.utils import send_to_log_channel
 
 logger = logging.getLogger(__name__)
 

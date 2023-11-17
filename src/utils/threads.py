@@ -1,8 +1,15 @@
+import logging
 from typing import Optional
 
 import discord
 from base import InteractionChannel, MessageableChannel
-from constants import ACTIVATE_THREAD_PREFX, INACTIVATE_THREAD_PREFIX
+from constants import (
+    ACTIVATE_THREAD_PREFX,
+    ALLOWED_SERVER_IDS,
+    INACTIVATE_THREAD_PREFIX,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def should_block(guild: Optional[discord.Guild]) -> bool:

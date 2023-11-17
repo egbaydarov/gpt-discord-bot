@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import discord
 import yaml
@@ -110,3 +111,34 @@ def get_all_icons() -> list[str]:
         icon_list.append(value.get("icon"))
     icon_list.append("🤖")
     return icon_list
+
+
+def get_system_message(thread: discord.Thread, persona: Persona) -> Persona:
+    first_message = thread.starter_message
+    if first_message:
+        content = first_message.content
+        if "**__System Message__**:\n>" in content:
+            return Persona(
+                name=persona.name,
+                title=persona.title,
+                icon=persona.icon,
+                color=persona.color,
+                system=content.replace("**__System Message__**:\n> ", ""),
+                model=persona.model,
+            )
+    return persona
+
+
+def create_system_message(
+    persona: Persona, system_message: Optional[str] = None
+) -> Persona:
+    if system_message:
+        return Persona(
+            name=persona.name,
+            title=persona.title,
+            icon=persona.icon,
+            color=persona.color,
+            system=system_message,
+            model=persona.model,
+        )
+    return persona
