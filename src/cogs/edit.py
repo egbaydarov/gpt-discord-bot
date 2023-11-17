@@ -109,7 +109,7 @@ class EditThread(commands.GroupCog, name="edit"):
 
     @app_commands.command(
         name="system",
-        description="Change the system message, override the persona system message. Let empty to return to the persona system message",
+        description="Change the system message, override the persona. Let empty to return to default message.",
     )
     @discord.app_commands.describe(system="The system message to change to")
     @discord.app_commands.guild_only()

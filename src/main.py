@@ -27,23 +27,23 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 
-class Owlly(discord.Client):
-    def __init__(self, *, intents: discord.Intents) -> None:  # noqa
-        super().__init__(intents=intents)
-        self.tree = discord.app_commands.CommandTree(self)
+class Owlly(commands.Bot):
+    def __init__(self, *, intents: discord.Intents, command_prefix: str) -> None:  # noqa
+        super().__init__(intents=intents, command_prefix=command_prefix)
+        self.command_prefix = command_prefix
 
     async def setup_hook(self) -> None:  # noqa
         logger.info("Setting up slash commands")
         cogs = Path("src/cogs").glob("*.py")
         for cog in cogs:
-            await bot.load_extension(f"cogs.{cog.stem}")
+            await client.load_extension(f"cogs.{cog.stem}")
             logger.info(f"Loaded cog {cog.stem}")
         await self.tree.sync()
 
 
-client = Owlly(intents=intents)
+client = Owlly(intents=intents, command_prefix="!")
 tree = client.tree
-bot = commands.Bot(command_prefix="!", intents=intents)
+
 TOKEN_ENCODING = tiktoken.encoding_for_model(
     "gpt-4"
 )  # need to be upgraded to the new gpt-4 turbo but can do the job for now
