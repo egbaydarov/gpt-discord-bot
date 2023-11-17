@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import Optional, cast
 
 import discord
@@ -11,6 +10,7 @@ from main import (
     models_choice,
     personas_choice,
 )
+from rich.console import Console
 from utils.chat import start_chat_thread
 from utils.completion import generate_completion_response, process_response
 from utils.messages import (
@@ -23,7 +23,8 @@ from utils.personas import get_persona_by_emoji, update_persona_models
 from utils.threads import allowed_thread, close_thread, should_block
 from utils.utils import send_to_log_channel
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 class Communicate(commands.Cog):
@@ -59,7 +60,7 @@ class Communicate(commands.Cog):
 
     @app_commands.command(name="rerun", description="Rerun the last message")
     async def rerun(self, int: discord.Interaction) -> None:  # noqa
-        if not allowed_thread(client, int.channel, int.guild, int.user):
+        if not allowed_thread(self.bot, int.channel, int.guild, int.user):
             await int.response.send_message(
                 "This command can only be used in a thread created by the bot",
                 ephemeral=True,
@@ -97,7 +98,7 @@ class Communicate(commands.Cog):
                 )
                 await process_response(thread=thread, response_data=response_data)
         except Exception as e:
-            logger.exception(e)
+            error.print_exception()
             await follow_up.edit(content=f"Failed to rerun: {str(e)}")
             return
         await follow_up.delete()
@@ -183,7 +184,7 @@ class Communicate(commands.Cog):
             )
 
         except Exception as e:
-            logger.error(e)
+            error.print_exception()
             await int.response.send_message(
                 f"Failed to start chat {str(e)}", ephemeral=True
             )

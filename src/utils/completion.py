@@ -1,5 +1,4 @@
 import io
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -17,10 +16,12 @@ from constants import (
     THREAD_NAME,
     TIME_FORMAT,
 )
+from rich.console import Console
 from utils.messages import split_into_shorter_messages
 from utils.threads import close_thread
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 class CompletionResult(Enum):
@@ -66,7 +67,7 @@ async def generate_completion_response(
                         status=status, reply_text=None, status_text=js
                     )
     except Exception as e:
-        logger.exception(e)
+        error.print_exception()
         return CompletionData(
             status=CompletionResult.ERROR, reply_text=None, status_text=str(e)
         )
@@ -163,7 +164,7 @@ async def resume_message(
             )
             return ""
     except Exception as e:
-        logger.exception(e)
+        error.print_exception()
         await followup.edit(
             content="",
             embed=discord.Embed(

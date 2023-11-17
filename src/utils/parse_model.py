@@ -5,7 +5,11 @@ from typing import Optional
 import discord
 from base import OpenAIModel, Persona
 from constants import KNOWLEDGE_CUTOFF, MAX_INPUTS_TOKENS, OPENAI_DEFAULT_MODEL
+from rich.console import Console
 from utils.personas import get_persona
+
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 def open_model() -> list[OpenAIModel]:
@@ -109,3 +113,9 @@ async def edit_embed(
             await int.response.send_message(
                 f"Changed model to {model.name}", ephemeral=True
             )
+    else:
+        if int:
+            await int.response.send_message(
+                f"Failed to change model to {model.name}", ephemeral=True
+            )
+        error.log("Failed to change model", log_locals=True)

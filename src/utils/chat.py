@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import textwrap
 from typing import Optional, cast
 
@@ -10,6 +9,7 @@ from constants import (
     SECONDS_DELAY_RECEIVING_MSG,
 )
 from discord import Message as DiscordMessage
+from rich.console import Console
 from tiktoken import Encoding
 from utils.completion import (
     generate_completion_response,
@@ -32,7 +32,8 @@ from utils.personas import (
 from utils.threads import allowed_thread, close_thread, should_block
 from utils.utils import send_to_log_channel
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 async def start_chat_thread(  # noqa
@@ -62,7 +63,7 @@ async def start_chat_thread(  # noqa
             persona_system = create_system_message(persona_system, system_message)
             message_content = ""
             if not persona_system.system == original_persona.system:
-                message_content = "**__System Message__**:\n> {persona_system.system}"
+                message_content = f"**__System Message__**:\n> {persona_system.system}"
             embed = discord.Embed(
                 title=f"{persona_system.icon} {persona_system.title}",
                 description=f"<@{user.id}> started a new chat",
@@ -78,7 +79,7 @@ async def start_chat_thread(  # noqa
                 embed=embed,
             )
         except Exception as e:
-            logger.exception(e)
+            error.print_exception(show_locals=True)
             await follow_up.edit(content=f"Failed to start chat {str(e)}")
             return
 
@@ -97,7 +98,7 @@ async def start_chat_thread(  # noqa
                 .replace("\n", " ")
                 .replace("__", "")
             )  # remove newlines
-            logger.info(f"Thread created - {user.global_name}: {message}")
+            console.log(f"Thread created - {user.global_name}: {message}")
 
             await send_to_log_channel(
                 client,
@@ -120,7 +121,7 @@ async def start_chat_thread(  # noqa
             await process_response(thread=thread, response_data=response_data)
 
     except Exception as e:
-        logger.error(e)
+        error.print_exception(show_locals=True)
         await int.response.send_message(
             f"Failed to start chat {str(e)}", ephemeral=True
         )
@@ -175,7 +176,7 @@ async def chat_bot(
                 # there is another message, so ignore this one
                 return
 
-        logger.info(
+        console.log(
             f"Thread message to process - {message.author}: {message.content[:50]} - {thread.name} {thread.jump_url}"
         )
 
@@ -194,5 +195,5 @@ async def chat_bot(
             return
         async with thread.typing():
             await process_response(thread=thread, response_data=response_data)
-    except Exception as e:
-        logger.exception(e)
+    except Exception:
+        error.print_exception(show_locals=True)

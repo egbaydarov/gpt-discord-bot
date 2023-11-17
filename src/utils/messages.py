@@ -1,4 +1,3 @@
-import logging
 from typing import Any, Optional, cast
 
 import discord
@@ -7,8 +6,10 @@ from base import Message, Persona, Thread
 from constants import MAX_CHARS_PER_REPLY_MSG
 from discord import Client, ClientUser
 from discord import Message as DiscordMessage
+from rich.console import Console
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 def discord_message_to_message(
@@ -23,7 +24,7 @@ def discord_message_to_message(
         and len(message.reference.cached_message.embeds[0].fields) > 0
     ):
         field = message.reference.cached_message.embeds[0].fields[0]
-        logger.info(f"field.name - {field.name}")
+        console.log(f"field.name - {field.name}")
         return Message(user="user", text=field.value)
     elif message.content:
         user_name = "assistant" if message.author.name == bot_name else "user"

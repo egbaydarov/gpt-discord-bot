@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -8,8 +7,10 @@ import yaml
 from base import OpenAIModel, Persona
 from constants import KNOWLEDGE_CUTOFF, OPENAI_DEFAULT_MODEL, SYSTEM_MESSAGE
 from discord import Thread
+from rich.console import Console
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 def open_persona():  # noqa
@@ -100,7 +101,7 @@ def generate_choice_persona() -> list[discord.app_commands.Choice]:
         persona_list.append(
             discord.app_commands.Choice(name=value.get("keywords"), value=persona)
         )
-    logger.info(f"persona_list: {persona_list}")
+    console.log(f"persona_list: {persona_list}")
     return persona_list
 
 

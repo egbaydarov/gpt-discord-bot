@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from pathlib import Path
 
 import discord
@@ -10,18 +9,15 @@ from constants import (
 )
 from discord import Message as DiscordMessage
 from discord.ext import commands
+from rich.console import Console
 from utils.chat import chat_bot
 from utils.parse_model import generate_choice_model
 from utils.personas import (
     generate_choice_persona,
 )
-from utils.utils import (
-    logger,
-)
 
-logging.basicConfig(
-    format="[%(asctime)s] [%(filename)s:%(lineno)d] %(message)s", level=logging.INFO
-)
+error = Console(stderr=True, style="bold red")
+console = Console()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -33,11 +29,11 @@ class Owlly(commands.Bot):
         self.command_prefix = command_prefix
 
     async def setup_hook(self) -> None:  # noqa
-        logger.info("Setting up slash commands")
+        console.log("Setting up slash commands")
         cogs = Path("src/cogs").glob("*.py")
         for cog in cogs:
             await client.load_extension(f"cogs.{cog.stem}")
-            logger.info(f"Loaded cog {cog.stem}")
+            console.log(f"Loaded cog {cog.stem}")
         await self.tree.sync()
 
 
@@ -53,7 +49,7 @@ models_choice = generate_choice_model()
 
 @client.event
 async def on_ready() -> None:
-    logger.info(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
+    console.log(f"We have logged in as {client.user}. Invite URL: {BOT_INVITE_URL}")
 
 
 # calls for each message

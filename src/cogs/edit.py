@@ -7,13 +7,13 @@ Allow to change the parameters of the thread :
 
 """
 
-import logging
 from typing import Optional, cast
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from main import client, models_choice, personas_choice
+from rich.console import Console
 from utils.parse_model import create_model_commands, edit_embed, get_model_from_name
 from utils.personas import (
     get_all_icons,
@@ -25,7 +25,8 @@ from utils.personas import (
 from utils.threads import allowed_thread
 from utils.utils import send_to_log_channel
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 class EditThread(commands.GroupCog, name="edit"):
@@ -38,14 +39,14 @@ class EditThread(commands.GroupCog, name="edit"):
     @discord.app_commands.choices(persona=personas_choice)
     @discord.app_commands.guild_only()
     async def change_persona(
-        self: commands.Cog,
+        self,  # noqa
         int: discord.Interaction,
         persona: Optional[discord.app_commands.Choice[str]] = None,
     ) -> None:
-        logger.info(
+        console.log(
             f"Changing persona to {persona.value} in Guild: {int.guild}"  # type: ignore
         )
-        if not allowed_thread(client, int.channel, int.guild, int.user):
+        if not allowed_thread(self.bot, int.channel, int.guild, int.user):
             await int.response.send_message(
                 "This command can only be used in a thread created by the bot",
                 ephemeral=True,
@@ -96,7 +97,7 @@ class EditThread(commands.GroupCog, name="edit"):
         int: discord.Interaction,
         model: Optional[discord.app_commands.Choice[str]] = None,
     ) -> None:
-        if not allowed_thread(client, int.channel, int.guild, int.user):
+        if not allowed_thread(self.bot, int.channel, int.guild, int.user):
             await int.response.send_message(
                 "This command can only be used in a thread created by the bot",
                 ephemeral=True,
@@ -105,7 +106,19 @@ class EditThread(commands.GroupCog, name="edit"):
         thread = cast(discord.Thread, int.channel)
         # default model from persona thread model if not specified
         gpt_models = model.value if model else get_persona_by_emoji(thread).model
-        await edit_embed(thread, get_model_from_name(gpt_models), None, int)
+        await edit_embed(thread, get_model_from_name(gpt_models), None)
+        await send_to_log_channel(
+            client,
+            int.guild.id,  # type: ignore
+            thread.name,
+            int.user.global_name,  # type: ignore
+            None,
+            get_model_from_name(gpt_models),
+            "changed",
+        )
+        await int.response.send_message(
+            f"Changed model to {gpt_models}", ephemeral=True
+        )
 
     @app_commands.command(
         name="system",
@@ -118,7 +131,7 @@ class EditThread(commands.GroupCog, name="edit"):
         int: discord.Interaction,
         system: Optional[str] = None,
     ) -> None:
-        if not allowed_thread(client, int.channel, int.guild, int.user):
+        if not allowed_thread(self.bot, int.channel, int.guild, int.user):
             await int.response.send_message(
                 "This command can only be used in a thread created by the bot",
                 ephemeral=True,

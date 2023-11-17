@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import textwrap
 from typing import Literal, Optional
 
@@ -15,8 +14,10 @@ from constants import (
 )
 from discord import Client
 from discord.ext.commands import Bot
+from rich.console import Console
 
-logger = logging.getLogger(__name__)
+console = Console()
+error = Console(stderr=True, style="bold red")
 
 
 async def send_to_log_channel(  # noqa
@@ -37,12 +38,12 @@ async def send_to_log_channel(  # noqa
         logs = ChannelLogs(logs["logs"]["channel_id"], logs["logs"]["event"])
         log_channel = client.get_channel(logs.channel_id)
         message = ""
-        logger.info(f"logs.event - {logs.event.get('message', False)}")
+        console.log(f"logs.event - {logs.event.get('message', False)}")
         match type:
             case "message":
                 message = "New message received"
                 if not logs.event.get("message", False):
-                    logger.info("logs.event.get('message', False) - True")
+                    console.log("logs.event.get('message', False) - True")
                     return
                 if token:
                     message += f"\n- __Token count__: {token}"
@@ -72,8 +73,8 @@ async def send_to_log_channel(  # noqa
             if openai_model:
                 message = message.replace(OPENAI_DEFAULT_MODEL, openai_model.name)
             await log_channel.send(textwrap.dedent(message))
-    except Exception as e:
-        logger.exception(e)
+    except Exception:
+        error.print_exception()
         return
 
 

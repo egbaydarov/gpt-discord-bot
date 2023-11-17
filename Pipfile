@@ -11,6 +11,7 @@ dacite = "*"
 install = "*"
 aiohttp = "==3.9.0b0"
 tiktoken = "*"
+rich = "*"
 
 [dev-packages]
 
