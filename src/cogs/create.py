@@ -3,8 +3,6 @@ import logging
 from typing import Optional, cast
 
 import discord
-from src.utils.chat import start_chat_thread
-from src.utils.completion import generate_completion_response, process_response
 from discord import app_commands
 from discord.ext import commands
 from main import (
@@ -14,17 +12,17 @@ from main import (
     models_choice,
     personas_choice,
 )
-from src.utils.parse_model import get_models_completion
-from src.utils.personas import get_persona_by_emoji, update_persona_models
-
-from src.utils.utils import (
-    allowed_thread,
+from utils.chat import start_chat_thread
+from utils.completion import generate_completion_response, process_response
+from utils.messages import (
     count_token_message,
     generate_initial_system,
     remove_last_bot_message,
-    send_to_log_channel,
-    should_block,
 )
+from utils.parse_model import get_models_completion
+from utils.personas import get_persona_by_emoji, update_persona_models
+from utils.threads import allowed_thread, should_block
+from utils.utils import send_to_log_channel
 
 logger = logging.getLogger(__name__)
 

@@ -48,7 +48,6 @@ def get_model_from_name(model_name: str | None) -> OpenAIModel:
 def get_models_completion(
     thread: discord.Thread, persona: Persona | None
 ) -> OpenAIModel:
-    open_model()
     first_thread_message = thread.starter_message
     if first_thread_message:
         # get footer
@@ -75,3 +74,38 @@ def create_model_commands(
         knowledge_cutoff=KNOWLEDGE_CUTOFF,
         max_input_token=MAX_INPUTS_TOKENS,
     )
+
+
+async def edit_embed(
+    thread: discord.Thread,
+    model: OpenAIModel,
+    message_system: Optional[str] = None,
+    int: Optional[discord.Interaction] = None,
+) -> None:
+    first_thread_message = thread.starter_message
+    if first_thread_message:
+        # get footer
+        footer = first_thread_message.embeds[0].footer.text
+        if footer:
+            # replace model after the "model: " text
+            old_model = footer.split("Model: ")[1]
+            new_model = model.name
+            new_footer = footer.replace(old_model, new_model)
+        else:
+            new_footer = f"Model: {model.name}"
+        # edit first message
+        await first_thread_message.edit(
+            content=message_system if message_system else first_thread_message.content,
+            embed=discord.Embed(
+                title=first_thread_message.embeds[0].title,
+                description=first_thread_message.embeds[0].description,
+                color=first_thread_message.embeds[0].color,
+            ).set_footer(text=new_footer),
+        )
+        if int:
+            msg = f"Changed model to {model.name}"
+            if message_system:
+                msg += f"with:\n>>>{message_system}"
+            await int.response.send_message(
+                f"Changed model to {model.name}", ephemeral=True
+            )
