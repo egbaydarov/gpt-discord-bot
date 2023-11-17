@@ -28,7 +28,7 @@ from utils import (
 logger = logging.getLogger(__name__)
 
 
-async def chat(  # noqa
+async def start_chat_thread(  # noqa
     client: discord.Client,
     int: discord.Interaction,
     message: str,
@@ -50,8 +50,12 @@ async def chat(  # noqa
         try:
             models_to_use = create_model_commands(model, persona)
             persona_system = get_persona(persona.value if persona else None)
+            original_persona = persona_system
             persona_system = update_persona_models(persona_system, models_to_use)
             persona_system = create_system_message(persona_system, system_message)
+            message_content = ""
+            if not persona_system.system == original_persona.system:
+                message_content = "**__System Message__**:\n> {persona_system.system}"
             embed = discord.Embed(
                 title=f"{persona_system.icon} {persona_system.title}",
                 description=f"<@{user.id}> started a new chat",
@@ -63,7 +67,7 @@ async def chat(  # noqa
             embed.set_footer(text=f"Model: {models_to_use.name}")
 
             await follow_up.edit(
-                content=f"**__System Message__**:\n> {persona_system.system}",
+                content=message_content,
                 embed=embed,
             )
         except Exception as e:
@@ -115,7 +119,7 @@ async def chat(  # noqa
         )
 
 
-async def messages(
+async def chat_bot(
     message: DiscordMessage, client: discord.Client, model: Encoding
 ) -> None:  # noqa
     try:
